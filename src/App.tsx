@@ -14,7 +14,9 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   Td,
   TableCaption,
   TableContainer, } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
+import { Extract, searchInitial } from './hooks/useExtract';
 
 function App() {
 
@@ -59,6 +61,17 @@ function App() {
         break;
     }
   }
+
+  const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
+
+  async function searchInitialExtract(){
+    setExtractsInitial(await searchInitial());
+    console.log(extractsInitial);
+  }
+
+  useEffect( () => {
+    searchInitialExtract();
+  },[]);
 
   return (
     <Box>
@@ -148,33 +161,27 @@ function App() {
       </Tr>
     </Thead>
     <Tbody>
-      <Tr>
-        <Td>inches</Td>
-        <Td>inches</Td>
-        <Td>millimetres (mm)</Td>
-        <Td isNumeric>25.4</Td>
-      </Tr>
-      <Tr>
-        <Td>feet</Td>
-        <Td>feet</Td>
-        <Td>centimetres (cm)</Td>
-        <Td isNumeric>30.48</Td>
-      </Tr>
-      <Tr>
-         <Td>feet</Td>
-         <Td>feet</Td>
-        <Td>metres (m)</Td>
-        <Td isNumeric>0.91444</Td>
-      </Tr>
+      {extractsInitial?.map((extract) => {
+      return(
+        <>
+       <Tr key={extract.id}>
+        <Td>{new Date(extract.date).toLocaleDateString('pt-BR')}</Td>
+        <Td>{extract.category}</Td>
+        <Td>{extract.title}</Td>
+        <Td textAlign={'end'} fontWeight={'bold'} color={extract.value > 0 ? 'green': 'red'}>R${extract.value}</Td>
+     </Tr>
+     </>
+      )
+      })}
     </Tbody>
-    <Tfoot>
+    {/* <Tfoot>
       <Tr>
         <Th>To convert</Th>
         <Th>To convert</Th>
         <Th>into</Th>
         <Th isNumeric>multiply by</Th>
       </Tr>
-    </Tfoot>
+    </Tfoot> */}
   </Table>
 </TableContainer>
 

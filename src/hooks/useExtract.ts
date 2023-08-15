@@ -9,12 +9,11 @@ export interface Extract {
 }
 
 // Adicionar Axios ao projeto
-export const searchInitial = async() =>{
+export const searchInitial = async () =>{
     let extracts;
     await api.get(`/financial-organizational/extract/search/initial`)
     .then(response => {
-        extracts = response.data
+        extracts = response.data;
     });
-
-    return extracts
+    return extracts;
 }

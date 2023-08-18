@@ -8,7 +8,6 @@ export interface Extract {
     value: number
 }
 
-// Adicionar Axios ao projeto
 export const searchInitial = async () =>{
     let extracts;
     await api.get(`/financial-organizational/extract/search/initial`)
@@ -16,4 +15,16 @@ export const searchInitial = async () =>{
         extracts = response.data;
     });
     return extracts;
+}
+
+//utilizar o react hook form para criar a função de cadastro
+
+// export const createExtract = async (extract:any) => {
+//     await api.post(`/extract`, extract)
+//     .then(response => response.data);
+// }
+
+export const createExtract = async (extract:any) => {
+    await api.post(`/financial-organizational/extract`, extract)
+    .then(response => console.log(response.data));
 }

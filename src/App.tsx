@@ -8,15 +8,15 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   Table,
   Thead,
   Tbody,
-  Tfoot,
   Tr,
   Th,
   Td,
   TableCaption,
-  TableContainer, } from '@chakra-ui/react';
+  TableContainer } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
-import { Extract, searchInitial } from './hooks/useExtract';
+import { Extract, createExtract, searchInitial } from './hooks/useExtract';
+import { useForm } from 'react-hook-form';
 
 function App() {
 
@@ -28,50 +28,58 @@ function App() {
         break;
       case 2:
         return 'Favereiro';
-        break;
       case 3:
         return 'Março';
-        break;
       case 4:
         return 'Abril';
-        break;
       case 5:
         return 'Maio';
-        break;
       case 6:
         return 'Junho';
-        break;
       case 7:
         return 'Julho';
-        break;
       case 8:
         return 'Agosto';
-        break;
       case 9:
         return 'Setembro';
-        break;
       case 10:
         return 'Outubro';
-        break;
       case 11:
         return 'Novembro';
-        break;
       case 12:
         return 'Dezembro';
-        break;
     }
   }
 
   const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
+  const{register, handleSubmit} = useForm();
+  const [loading, setLoading] = useState(false);
 
   async function searchInitialExtract(){
     setExtractsInitial(await searchInitial());
-    console.log(extractsInitial);
+  }
+
+  async function create(object:any){
+    try{
+      setLoading(true);
+      createExtract(JSON.stringify(object));
+    }catch(e){
+      console.log(e)
+    }finally{
+      setLoading(false)
+    }
   }
 
   useEffect( () => {
     searchInitialExtract();
-  },[]);
+  },[create]);
+
+
+  //criar função backend pra retornar a Despesa, Balanço e Receita
+  //Mostrar dados em ordem de data
+  //Pesquisa mensal
+  //Pesquisa por período específico
+
 
   return (
     <Box>
@@ -108,34 +116,37 @@ function App() {
         </CardBody>
       </Card>
 
-      <Card display={'flex'} direction={'row'} alignItems={'center'} w={'1000px'}>
+    <Flex as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
+      <Card direction={'row'} >
         <CardBody>
           <Flex direction={'column'}>
             <Text>Data</Text>
             <Input
+            
             placeholder="Select Date and Time"
             size="md"
             type="date"
+            {...register("date")}
             />
           </Flex>
         </CardBody>
         <CardBody>
           <Text>Categoria</Text>
-          <Select w={'150px'}>
-          <option value='option1'>Creditar</option>
-          <option value='option2'>Debitar</option>
+          <Select w={'150px'} {...register("category")}>
+          <option value='Credito'>Creditar</option>
+          <option value='Débito'>Debitar</option>
           </Select>
         </CardBody>
         <CardBody>
           <Text>Titulo</Text>
-          <Input placeholder='Salário' />
+          <Input placeholder='Salário' {...register("title")} />
         </CardBody>
         <CardBody>
           <Text>Valor</Text>
           <Flex>
           {/* <Text fontSize={'28px'}>R$</Text> */}
-          <NumberInput defaultValue={100} min={0.1} max={99999999}>
-            <NumberInputField />
+          <NumberInput defaultValue={100} min={0.1} max={99999999} >
+            <NumberInputField {...register("value")} />
             <NumberInputStepper>
             <NumberIncrementStepper />
             <NumberDecrementStepper />
@@ -145,13 +156,14 @@ function App() {
         </CardBody>
         <CardBody alignSelf={'end'}>
         
-        <Button colorScheme='yellow'>Adicionar</Button>
+        <Button colorScheme='yellow' type='submit' isLoading={loading}>Adicionar</Button>
         </CardBody>
       </Card>
+      </Flex>
 
   <TableContainer w={'1000px'} >
-  <Table variant='simple'>
-    <TableCaption>Imperial to metric conversion factors</TableCaption>
+  <Table variant='striped'>
+    <TableCaption fontWeight={'bold'}>Dados correspondente ao mês de {returnMonth()}</TableCaption>
     <Thead>
       <Tr>
         <Th>Data</Th>
@@ -168,7 +180,7 @@ function App() {
         <Td>{new Date(extract.date).toLocaleDateString('pt-BR')}</Td>
         <Td>{extract.category}</Td>
         <Td>{extract.title}</Td>
-        <Td textAlign={'end'} fontWeight={'bold'} color={extract.value > 0 ? 'green': 'red'}>R${extract.value}</Td>
+        <Td textAlign={'end'} fontWeight={'bold'} color={extract.category === 'Débito' ? 'red': 'green'}>R${extract.value}</Td>
      </Tr>
      </>
       )

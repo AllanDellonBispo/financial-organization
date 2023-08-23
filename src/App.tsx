@@ -15,7 +15,7 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   TableContainer } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
-import { Extract, createExtract, searchInitial } from './hooks/useExtract';
+import { Extract, createExtract, expenses, receipt, searchInitial } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
 function App() {
@@ -25,7 +25,6 @@ function App() {
     switch(currentDate+1){
       case 1:
         return 'Janeiro';
-        break;
       case 2:
         return 'Favereiro';
       case 3:
@@ -52,31 +51,43 @@ function App() {
   }
 
   const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
+  const [expensesTotal, setExpensesTotal] = useState<Number>();
+  const [receiptTotal, setReceiptTotal] = useState<Number>();
   const{register, handleSubmit} = useForm();
   const [loading, setLoading] = useState(false);
+
+  async function searchExpenses(){
+    setExpensesTotal(await expenses(new Date().getMonth()));
+  }
+
+  async function searchReceipt(){
+    setReceiptTotal(await receipt(new Date().getMonth()));
+  }
 
   async function searchInitialExtract(){
     setExtractsInitial(await searchInitial());
   }
 
+
   async function create(object:any){
-    try{
       setLoading(true);
-      createExtract(JSON.stringify(object));
-    }catch(e){
-      console.log(e)
-    }finally{
-      setLoading(false)
-    }
+      createExtract(JSON.stringify(object))
+      .then(() => {
+        searchInitialExtract();
+        searchExpenses();
+        searchReceipt();
+  }).catch((e)=>console.log(e))
+  .finally(()=> setLoading(false));
   }
 
-  useEffect( () => {
+   useEffect( () => {
     searchInitialExtract();
-  },[create]);
+    searchExpenses();
+    searchReceipt();
+  },[]);
 
 
-  //criar função backend pra retornar a Despesa, Balanço e Receita
-  //Mostrar dados em ordem de data
+  //Fazer lista ser atualizada ao acadastrar um novo extract
   //Pesquisa mensal
   //Pesquisa por período específico
 
@@ -104,15 +115,17 @@ function App() {
         </CardBody>
         <CardBody>
           <Text>Receita</Text>
-          <Text color={10 < 2  ? 'red' : 'green'} fontWeight={'bold'}>R$ 0.00</Text>
+          <Text  fontWeight={'bold'}>R$ {(receiptTotal)?.toFixed(2)}</Text>
         </CardBody>
         <CardBody>
           <Text>Despesa</Text>
-          <Text color={10 > 2  ? 'red' : 'green'} fontWeight={'bold'}>R$ 2360.12</Text>
+          <Text  fontWeight={'bold'}>R$ {(expensesTotal)?.toFixed(2)}</Text>
         </CardBody>
         <CardBody>
           <Text>Balanço</Text>
-          <Text color={10 > 2  ? 'red' : 'green'} fontWeight={'bold'}>R$ -2360.12</Text>
+          <Text 
+          color={Number(receiptTotal) < Number(expensesTotal)  ? 'red' : 'green'}
+          fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal)).toFixed(2)}</Text>
         </CardBody>
       </Card>
 
@@ -133,7 +146,7 @@ function App() {
         <CardBody>
           <Text>Categoria</Text>
           <Select w={'150px'} {...register("category")}>
-          <option value='Credito'>Creditar</option>
+          <option value='Crédito'>Creditar</option>
           <option value='Débito'>Debitar</option>
           </Select>
         </CardBody>

@@ -17,12 +17,23 @@ export const searchInitial = async () =>{
     return extracts;
 }
 
-//utilizar o react hook form para criar a função de cadastro
+export const expenses = async (month:Number) =>{
+    let total;
+    await api.get(`/financial-organizational/extract/search/expenses/${month}`)
+    .then(response => {
+        total = response.data.total;
+    });
+    return total;
+}
 
-// export const createExtract = async (extract:any) => {
-//     await api.post(`/extract`, extract)
-//     .then(response => response.data);
-// }
+export const receipt = async (month:Number) =>{
+    let total;
+    await api.get(`/financial-organizational/extract/search/receipt/${month}`)
+    .then(response => {
+        total = response.data.total;
+    });
+    return total;
+}
 
 export const createExtract = async (extract:any) => {
     await api.post(`/financial-organizational/extract`, extract)

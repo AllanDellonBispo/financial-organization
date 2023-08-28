@@ -12,21 +12,29 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   Th,
   Td,
   TableCaption,
-  TableContainer } from '@chakra-ui/react';
+  TableContainer, 
+  useToast} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
-import { Extract, createExtract, expenses, receipt, searchInitial } from './hooks/useExtract';
+import { Extract, createExtract, expenses, receipt, searchInitial, searchNextMonth, searchPreviousMonth } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
 function App() {
 
+  const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
+  const [expensesTotal, setExpensesTotal] = useState<Number>();
+  const [receiptTotal, setReceiptTotal] = useState<Number>();
+  const [month, setMonth] = useState<Number>(Number(new Date().getMonth())+1);
+  const [loading, setLoading] = useState(false);
+  const {register, handleSubmit} = useForm();
+  const toast = useToast();
+  
   function returnMonth() {
-    const currentDate = new Date().getMonth();
-    switch(currentDate+1){
+    switch(Number(month)){
       case 1:
         return 'Janeiro';
       case 2:
-        return 'Favereiro';
+        return 'Fevereiro';
       case 3:
         return 'Março';
       case 4:
@@ -43,30 +51,71 @@ function App() {
         return 'Setembro';
       case 10:
         return 'Outubro';
-      case 11:
-        return 'Novembro';
-      case 12:
-        return 'Dezembro';
-    }
+        case 11:
+          return 'Novembro';
+          case 12:
+            return 'Dezembro';
+          }
+  }
+        
+  function successMessage (title:string, description:string, duration:number){
+          toast({
+            title,
+            description,
+            status: 'success',
+            duration,
+            isClosable: true,
+            position: 'top-left',
+          })
+  }
+      
+  function errorMessage (title:string, description:string, duration:number){
+          toast({
+            title,
+            description,
+            status: 'error',
+            duration,
+            isClosable: true,
+            position: 'top-left',
+          })
   }
 
-  const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
-  const [expensesTotal, setExpensesTotal] = useState<Number>();
-  const [receiptTotal, setReceiptTotal] = useState<Number>();
-  const{register, handleSubmit} = useForm();
-  const [loading, setLoading] = useState(false);
-
-  async function searchExpenses(){
-    setExpensesTotal(await expenses(new Date().getMonth()));
+  async function searchExpenses(month:Number){
+    setExpensesTotal(await expenses(Number(month)));
   }
-
-  async function searchReceipt(){
-    setReceiptTotal(await receipt(new Date().getMonth()));
+  
+  async function searchReceipt(month:Number){
+    setReceiptTotal(await receipt(Number(month)));
   }
-
+  
   async function searchInitialExtract(){
     setExtractsInitial(await searchInitial());
   }
+  
+  async function previousMonth(){
+    if(Number(month) > 1){
+      const monthUpdated = Number(month) - 1;
+      setMonth(monthUpdated);
+      searchExpenses(monthUpdated);
+      searchReceipt(monthUpdated);
+      setExtractsInitial(await searchPreviousMonth(Number(month)));
+    }else{
+      errorMessage(`Erro`, `Não existe registos anteriores a esse mês`, 6000);
+    }
+  }
+
+  async function nextMonth(){
+    if(Number(month) < 12){
+      const monthUpdated = Number(month) + 1;
+      setMonth(monthUpdated);
+      searchExpenses(monthUpdated);
+      searchReceipt(monthUpdated);
+      setExtractsInitial(await searchNextMonth(Number(month)));
+    }else{
+      errorMessage(`Erro`, `Não existe registos posteriores a esse mês`, 6000);
+    }
+  }
+
 
 
   async function create(object:any){
@@ -74,21 +123,21 @@ function App() {
       createExtract(JSON.stringify(object))
       .then(() => {
         searchInitialExtract();
-        searchExpenses();
-        searchReceipt();
-  }).catch((e)=>console.log(e))
+        searchExpenses(Number(month));
+        searchReceipt(Number(month));
+        successMessage(`Sucesso`, `Transação cadastrada!`, 3000);
+  }).catch((e)=>errorMessage(`Erro`, `${e}`, 6000))
   .finally(()=> setLoading(false));
   }
 
    useEffect( () => {
     searchInitialExtract();
-    searchExpenses();
-    searchReceipt();
+    searchExpenses(Number(month));
+    searchReceipt(Number(month));
   },[]);
 
 
-  //Fazer lista ser atualizada ao acadastrar um novo extract
-  //Pesquisa mensal
+  //Mostrar Receita, Despesa e Balanço mensal
   //Pesquisa por período específico
 
 
@@ -104,11 +153,11 @@ function App() {
       <Card display={'flex'} direction={'row'} w={'1000px'} mb={4}>
         <CardBody>
           <Flex gap={4}>
-            <Button colorScheme='yellow'>
+            <Button colorScheme='yellow' onClick={previousMonth}>
               <AiOutlineArrowLeft color={'white'}/>
             </Button>
             <Text alignSelf={'center'}>{returnMonth()}</Text>
-            <Button colorScheme='yellow'>
+            <Button colorScheme='yellow' onClick={nextMonth}>
               <AiOutlineArrowRight color={'white'}/>
             </Button>
           </Flex>
@@ -169,7 +218,7 @@ function App() {
         </CardBody>
         <CardBody alignSelf={'end'}>
         
-        <Button colorScheme='yellow' type='submit' isLoading={loading}>Adicionar</Button>
+        <Button colorScheme='yellow' type='submit' color={'white'} isLoading={loading}>Adicionar</Button>
         </CardBody>
       </Card>
       </Flex>

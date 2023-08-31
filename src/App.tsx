@@ -13,9 +13,23 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   Td,
   TableCaption,
   TableContainer, 
-  useToast} from '@chakra-ui/react';
+  useToast,
+  StatArrow,
+  Stat,
+  IconButton,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  useDisclosure} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
+import { MdDelete } from "react-icons/md";
+import { RiMoneyDollarCircleLine } from "react-icons/ri";
+import { BsFillExclamationCircleFill } from "react-icons/bs";
 import { Extract, createExtract, expenses, receipt, searchInitial, searchNextMonth, searchPreviousMonth } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
@@ -28,6 +42,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const {register, handleSubmit} = useForm();
   const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
   
   function returnMonth() {
     switch(Number(month)){
@@ -137,15 +152,22 @@ function App() {
   },[]);
 
 
-  //Mostrar Receita, Despesa e Balanço mensal
+  //Fazer paginação
+  //Fazer função para excluir registro
   //Pesquisa por período específico
 
 
   return (
     <Box>
       <Heading>
-        <Flex bg={'#4B0082'} color={'white'} h={'150px'} fontSize={28} display={'flex'} justifyContent={'center'}>
-          <Text p={4}>Sistema Financeiro</Text>
+        <Flex bg={'#4B0082'} color={'white'} h={'150px'} fontSize={28} display={'flex'} justifyContent={'space-between'} align={'center'}>
+          <Box ml={'4%'}>
+            <RiMoneyDollarCircleLine size={'30%'}/>
+          </Box>
+          <Text>Sistema Financeiro</Text>
+          <Box>
+            <RiMoneyDollarCircleLine size={'30%'}/>
+          </Box>
         </Flex>
       </Heading>
       <Flex display={'flex'} alignItems={'center'} direction={'column'} mt={-10}>
@@ -153,11 +175,11 @@ function App() {
       <Card display={'flex'} direction={'row'} w={'1000px'} mb={4}>
         <CardBody>
           <Flex gap={4}>
-            <Button colorScheme='yellow' onClick={previousMonth}>
+            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={previousMonth}>
               <AiOutlineArrowLeft color={'white'}/>
             </Button>
             <Text alignSelf={'center'}>{returnMonth()}</Text>
-            <Button colorScheme='yellow' onClick={nextMonth}>
+            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={nextMonth}>
               <AiOutlineArrowRight color={'white'}/>
             </Button>
           </Flex>
@@ -172,9 +194,14 @@ function App() {
         </CardBody>
         <CardBody>
           <Text>Balanço</Text>
+          <Flex>
           <Text 
           color={Number(receiptTotal) < Number(expensesTotal)  ? 'red' : 'green'}
           fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal)).toFixed(2)}</Text>
+            <Stat maxW={'10%'} ml={'4px'}>
+              <StatArrow type={Number(receiptTotal) < Number(expensesTotal)  ? 'decrease' : 'increase'}/>
+            </Stat>
+          </Flex>
         </CardBody>
       </Card>
 
@@ -184,10 +211,10 @@ function App() {
           <Flex direction={'column'}>
             <Text>Data</Text>
             <Input
-            
-            placeholder="Select Date and Time"
+            placeholder="Selecione uma data"
             size="md"
             type="date"
+            required
             {...register("date")}
             />
           </Flex>
@@ -201,14 +228,14 @@ function App() {
         </CardBody>
         <CardBody>
           <Text>Titulo</Text>
-          <Input placeholder='Salário' {...register("title")} />
+          <Input placeholder='Salário' required {...register("title")} />
         </CardBody>
         <CardBody>
           <Text>Valor</Text>
           <Flex>
           {/* <Text fontSize={'28px'}>R$</Text> */}
           <NumberInput defaultValue={100} min={0.1} max={99999999} >
-            <NumberInputField {...register("value")} />
+            <NumberInputField required {...register("value")} />
             <NumberInputStepper>
             <NumberIncrementStepper />
             <NumberDecrementStepper />
@@ -218,7 +245,7 @@ function App() {
         </CardBody>
         <CardBody alignSelf={'end'}>
         
-        <Button colorScheme='yellow' type='submit' color={'white'} isLoading={loading}>Adicionar</Button>
+        <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
         </CardBody>
       </Card>
       </Flex>
@@ -232,6 +259,7 @@ function App() {
         <Th>Categoria</Th>
         <Th>Título</Th>
         <Th isNumeric>Valor</Th>
+        <Th textAlign={'center'}>opções</Th>
       </Tr>
     </Thead>
     <Tbody>
@@ -242,22 +270,44 @@ function App() {
         <Td>{new Date(extract.date).toLocaleDateString('pt-BR')}</Td>
         <Td>{extract.category}</Td>
         <Td>{extract.title}</Td>
-        <Td textAlign={'end'} fontWeight={'bold'} color={extract.category === 'Débito' ? 'red': 'green'}>R${extract.value}</Td>
+        <Td textAlign={'end'} fontWeight={'bold'} color={extract.category === 'Débito' ? 'red': 'green'}>R${extract.value.toFixed(2)}</Td>
+        <Td textAlign={'center'}>
+          <IconButton
+          isRound={true}
+          variant='ghost'
+          colorScheme='red'
+          aria-label='Search database'
+          icon={<MdDelete size={'60%'} />} onClick={onOpen}/>
+      </Td>
      </Tr>
      </>
       )
       })}
     </Tbody>
-    {/* <Tfoot>
-      <Tr>
-        <Th>To convert</Th>
-        <Th>To convert</Th>
-        <Th>into</Th>
-        <Th isNumeric>multiply by</Th>
-      </Tr>
-    </Tfoot> */}
   </Table>
 </TableContainer>
+
+  <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader display={'flex'} alignItems={'center'}>
+            <Text color='orange' mr={'4px'}>Atenção</Text>
+            <BsFillExclamationCircleFill color='orange'/>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Text>Deseja excluir essa transação ?</Text>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}}>
+              Tenho certeza
+            </Button>
+            <Button onClick={onClose}>Cancelar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
 
       </Flex>
     </Box>

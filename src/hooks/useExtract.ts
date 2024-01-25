@@ -35,9 +35,9 @@ export const receipt = async (month:Number) =>{
     return total;
 }
 
-export const searchPreviousMonth = async (month:number) =>{
+export const searchPreviousMonth = async (month:number, year:number) =>{
     let extracts;
-    await api.get(`/financial-organizational/extract/search/previous/${month}`)
+    await api.get(`/financial-organizational/extract/search/previous/${month}/${year}`)
     .then(response => {
         extracts = response.data;
     });

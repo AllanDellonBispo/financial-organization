@@ -129,7 +129,7 @@ function App() {
       setMonth(monthUpdated);
       searchExpenses(monthUpdated);
       searchReceipt(monthUpdated);
-      setExtractsInitial(await searchPreviousMonth(Number(month)));
+      setExtractsInitial(await searchPreviousMonth(Number(month), Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro`, 6000);
     }

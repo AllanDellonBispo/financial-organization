@@ -44,9 +44,9 @@ export const searchPreviousMonth = async (month:number) =>{
     return extracts;
 }
 
-export const searchNextMonth = async (month:number) =>{
+export const searchNextMonth = async (month:number, year:number) =>{
     let extracts;
-    await api.get(`/financial-organizational/extract/search/next/${month}`)
+    await api.get(`/financial-organizational/extract/search/next/${month}/${year}`)
     .then(response => {
         extracts = response.data;
     });

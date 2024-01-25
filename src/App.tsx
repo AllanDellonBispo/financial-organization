@@ -24,12 +24,14 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   ModalCloseButton,
   ModalBody,
   ModalFooter,
-  useDisclosure} from '@chakra-ui/react';
+  useDisclosure,
+  Checkbox} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
 import { MdDelete } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
-import { BsFillExclamationCircleFill } from "react-icons/bs";
+import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
+import { VscSettings } from "react-icons/vsc";
 import { Extract, createExtract, expenses, receipt, searchInitial, searchNextMonth, searchPreviousMonth } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
@@ -43,6 +45,9 @@ function App() {
   const {register, handleSubmit} = useForm();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isOpenSearch, onOpen: onOpenSearch, onClose: onCloseSearch } = useDisclosure();
+  const [credits, setCredits] = useState(false);
+  const [debts, setDebts] = useState(false);
   
   function returnMonth() {
     switch(Number(month)){
@@ -95,6 +100,17 @@ function App() {
           })
   }
 
+  function infoMessage (title:string, description:string, duration:number){
+    toast({
+      title,
+      description,
+      status: 'info',
+      duration,
+      isClosable: true,
+      position: 'top-left',
+    })
+}
+
   async function searchExpenses(month:Number){
     setExpensesTotal(await expenses(Number(month)));
   }
@@ -115,7 +131,7 @@ function App() {
       searchReceipt(monthUpdated);
       setExtractsInitial(await searchPreviousMonth(Number(month)));
     }else{
-      errorMessage(`Erro`, `Não existe registos anteriores a esse mês`, 6000);
+      infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro`, 6000);
     }
   }
 
@@ -125,13 +141,16 @@ function App() {
       setMonth(monthUpdated);
       searchExpenses(monthUpdated);
       searchReceipt(monthUpdated);
-      setExtractsInitial(await searchNextMonth(Number(month)));
+      setExtractsInitial(await searchNextMonth(Number(month), Number(new Date().getFullYear())));
     }else{
-      errorMessage(`Erro`, `Não existe registos posteriores a esse mês`, 6000);
+      infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro.`, 6000);
     }
   }
 
-
+async function deleteExtract(){
+  successMessage(`Sucesso`, `O registro foi excluido!`, 2000);
+  onClose();
+}
 
   async function create(object:any){
       setLoading(true);
@@ -155,7 +174,8 @@ function App() {
   //Fazer paginação
   //Fazer função para excluir registro
   //Pesquisa por período específico
-
+  //Adicionar gráficos
+  //Adicionar notas fiscais
 
   return (
     <Box>
@@ -172,9 +192,9 @@ function App() {
       </Heading>
       <Flex display={'flex'} alignItems={'center'} direction={'column'} mt={-10}>
       
-      <Card display={'flex'} direction={'row'} w={'1000px'} mb={4}>
+      <Card display={'flex'} direction={'row'} w={'1000px'} mb={4} alignItems={'center'}>
         <CardBody>
-          <Flex gap={4}>
+          <Flex gap={4} alignItems={'center'}>
             <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={previousMonth}>
               <AiOutlineArrowLeft color={'white'}/>
             </Button>
@@ -182,6 +202,11 @@ function App() {
             <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={nextMonth}>
               <AiOutlineArrowRight color={'white'}/>
             </Button>
+            <Box>
+              <Button onClick={onOpenSearch} title='Filtrar'>
+                <VscSettings />
+              </Button>
+            </Box>
           </Flex>
         </CardBody>
         <CardBody>
@@ -300,10 +325,48 @@ function App() {
           </ModalBody>
 
           <ModalFooter>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}}>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={deleteExtract}>
               Tenho certeza
             </Button>
             <Button onClick={onClose}>Cancelar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal closeOnOverlayClick={false} isOpen={isOpenSearch} onClose={onCloseSearch} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader display={'flex'} alignItems={'center'}>
+            <Text mr={'4px'}>Pesquisa avançada</Text>
+            <BsClipboardDataFill />
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Text>Período inicial</Text>
+            <Input
+              placeholder="Select Date and Time"
+              size="md"
+              type="date"
+            />
+          </ModalBody>
+          <ModalBody pb={6}>
+            <Text>Período final</Text>
+            <Input
+              placeholder="Select Date and Time"
+              size="md"
+              type="date"
+            />
+          </ModalBody>
+          <ModalBody display={'flex'} justifyContent={'space-around'} pb={6}>
+            <Checkbox checked={credits} onClick={()=>{setDebts(false)}}>Apenas créditos</Checkbox>
+            <Checkbox checked={debts} onClick={()=>setCredits(false)}>Apenas débitos</Checkbox>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={onCloseSearch}>
+              Buscar
+            </Button>
+            <Button onClick={onCloseSearch}>Cancelar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

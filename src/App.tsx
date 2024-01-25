@@ -32,7 +32,7 @@ import { MdDelete } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
 import { VscSettings } from "react-icons/vsc";
-import { Extract, createExtract, expenses, receipt, searchInitial, searchNextMonth, searchPreviousMonth } from './hooks/useExtract';
+import { Extract, createExtract, deleteRecord, expenses, receipt, searchInitial, searchNextMonth, searchPreviousMonth } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
 function App() {
@@ -48,6 +48,7 @@ function App() {
   const { isOpen: isOpenSearch, onOpen: onOpenSearch, onClose: onCloseSearch } = useDisclosure();
   const [credits, setCredits] = useState(false);
   const [debts, setDebts] = useState(false);
+  const [selectedExtract, setSelectedExtract] = useState<Extract>();
   
   function returnMonth() {
     switch(Number(month)){
@@ -148,6 +149,12 @@ function App() {
   }
 
 async function deleteExtract(){
+  deleteRecord(Number(selectedExtract?.id))
+    .then(()=>{
+      searchInitialExtract();
+      searchExpenses(Number(month));
+      searchReceipt(Number(month));
+    });
   successMessage(`Sucesso`, `O registro foi excluido!`, 2000);
   onClose();
 }
@@ -302,7 +309,7 @@ async function deleteExtract(){
           variant='ghost'
           colorScheme='red'
           aria-label='Search database'
-          icon={<MdDelete size={'60%'} />} onClick={onOpen}/>
+          icon={<MdDelete size={'60%'} />} onClick={()=>{onOpen(); setSelectedExtract(extract)}}/>
       </Td>
      </Tr>
      </>

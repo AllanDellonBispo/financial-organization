@@ -57,3 +57,10 @@ export const createExtract = async (extract:any) => {
     await api.post(`/financial-organizational/extract`, extract)
     .then(response => console.log(response.data));
 }
+
+export const deleteRecord = async (id:number) =>{
+    await api.delete(`/financial-organizational/extract/delete/${id}`).then(response => console.log(response.data));
+
+}
+
+//Tratar retorno de mensagens

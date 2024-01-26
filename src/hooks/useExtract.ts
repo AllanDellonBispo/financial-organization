@@ -53,6 +53,34 @@ export const searchNextMonth = async (month:number, year:number) =>{
     return extracts;
 }
 
+export const searchPeriod = async (dateInitial: Date | undefined, dateFinal:Date | undefined) =>{
+    let extracts;
+    await api.get(`/financial-organizational/extract/filter/${dateInitial}/${dateFinal}`)
+    .then(response => {
+        extracts = response.data;
+    });
+    return extracts;
+}
+
+export const searchPeriodReceipt = async (dateInitial: Date | undefined, dateFinal:Date | undefined) =>{
+    let extracts;
+    await api.get(`/financial-organizational/extract/filter/receipt/${dateInitial}/${dateFinal}`)
+    .then(response => {
+        extracts = response.data;
+    });
+    return extracts;
+}
+
+export const searchPeriodExpenses = async (dateInitial: Date | undefined, dateFinal:Date | undefined) =>{
+    let extracts;
+    await api.get(`/financial-organizational/extract/filter/expenses/${dateInitial}/${dateFinal}`)
+    .then(response => {
+        extracts = response.data;
+    });
+    return extracts;
+}
+
+
 export const createExtract = async (extract:any) => {
     await api.post(`/financial-organizational/extract`, extract)
     .then(response => console.log(response.data));

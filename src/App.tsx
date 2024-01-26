@@ -25,14 +25,18 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   ModalBody,
   ModalFooter,
   useDisclosure,
-  Checkbox} from '@chakra-ui/react';
+  Checkbox,
+  HStack,
+  Tag,
+  TagLabel} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
 import { MdDelete } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
+import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
-import { Extract, createExtract, deleteRecord, expenses, receipt, searchInitial, searchNextMonth, searchPreviousMonth } from './hooks/useExtract';
+import { Extract, createExtract, deleteRecord, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
 function App() {
@@ -49,6 +53,9 @@ function App() {
   const [credits, setCredits] = useState(false);
   const [debts, setDebts] = useState(false);
   const [selectedExtract, setSelectedExtract] = useState<Extract>();
+  const [dateInitial, setDateInitial] = useState<Date>();
+  const [dateFinal, setDateFinal] = useState<Date>();
+  const [activeFilter, setActiveFilter] = useState<String>('gray.200'); 
   
   function returnMonth() {
     switch(Number(month)){
@@ -148,6 +155,18 @@ function App() {
     }
   }
 
+  async function searchFilter(){
+    if(credits === true){
+      setExtractsInitial(await searchPeriodReceipt(dateInitial, dateFinal));
+    }else if(debts === true){
+      setExtractsInitial(await searchPeriodExpenses(dateInitial, dateFinal));
+    }else{
+    setExtractsInitial(await searchPeriod(dateInitial, dateFinal));
+    }
+    setDebts(false);
+    setCredits(false);
+  }
+
 async function deleteExtract(){
   deleteRecord(Number(selectedExtract?.id))
     .then(()=>{
@@ -160,6 +179,7 @@ async function deleteExtract(){
 }
 
   async function create(object:any){
+      setActiveFilter('gray.200');
       setLoading(true);
       createExtract(JSON.stringify(object))
       .then(() => {
@@ -179,8 +199,6 @@ async function deleteExtract(){
 
 
   //Fazer paginação
-  //Fazer função para excluir registro
-  //Pesquisa por período específico
   //Adicionar gráficos
   //Adicionar notas fiscais
 
@@ -202,15 +220,15 @@ async function deleteExtract(){
       <Card display={'flex'} direction={'row'} w={'1000px'} mb={4} alignItems={'center'}>
         <CardBody>
           <Flex gap={4} alignItems={'center'}>
-            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={previousMonth}>
+            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={()=>{previousMonth();setActiveFilter('gray.200')}}>
               <AiOutlineArrowLeft color={'white'}/>
             </Button>
             <Text alignSelf={'center'}>{returnMonth()}</Text>
-            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={nextMonth}>
+            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={()=>{nextMonth(); setActiveFilter('gray.200')}}>
               <AiOutlineArrowRight color={'white'}/>
             </Button>
             <Box>
-              <Button onClick={onOpenSearch} title='Filtrar'>
+              <Button onClick={onOpenSearch} title='Filtrar' bg={String(activeFilter)} >
                 <VscSettings />
               </Button>
             </Box>
@@ -218,18 +236,18 @@ async function deleteExtract(){
         </CardBody>
         <CardBody>
           <Text>Receita</Text>
-          <Text  fontWeight={'bold'}>R$ {(receiptTotal)?.toFixed(2)}</Text>
+          <Text  fontWeight={'bold'}>R$ {Number(receiptTotal)?.toFixed(2)}</Text>
         </CardBody>
         <CardBody>
           <Text>Despesa</Text>
-          <Text  fontWeight={'bold'}>R$ {(expensesTotal)?.toFixed(2)}</Text>
+          <Text  fontWeight={'bold'}>R$ {Number(expensesTotal)?.toFixed(2)}</Text>
         </CardBody>
         <CardBody>
           <Text>Balanço</Text>
           <Flex>
           <Text 
           color={Number(receiptTotal) < Number(expensesTotal)  ? 'red' : 'green'}
-          fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal)).toFixed(2)}</Text>
+          fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal))?.toFixed(2)}</Text>
             <Stat maxW={'10%'} ml={'4px'}>
               <StatArrow type={Number(receiptTotal) < Number(expensesTotal)  ? 'decrease' : 'increase'}/>
             </Stat>
@@ -351,29 +369,41 @@ async function deleteExtract(){
           <ModalBody pb={6}>
             <Text>Período inicial</Text>
             <Input
-              placeholder="Select Date and Time"
+              placeholder="Select Date initial"
               size="md"
               type="date"
+              onChange={(e)=> setDateInitial(new Date(e.target?.value))}
             />
           </ModalBody>
           <ModalBody pb={6}>
             <Text>Período final</Text>
             <Input
-              placeholder="Select Date and Time"
+              placeholder="Select Date final"
               size="md"
               type="date"
+              onChange={(e)=> setDateFinal(new Date(e.target.value))}
             />
           </ModalBody>
           <ModalBody display={'flex'} justifyContent={'space-around'} pb={6}>
-            <Checkbox checked={credits} onClick={()=>{setDebts(false)}}>Apenas créditos</Checkbox>
-            <Checkbox checked={debts} onClick={()=>setCredits(false)}>Apenas débitos</Checkbox>
+            <Checkbox isChecked={credits} onChange={()=>{setDebts(false); setCredits(true)}}>Apenas créditos</Checkbox>
+            <Checkbox isChecked={debts} onChange={()=>{setCredits(false); setDebts(true)}}>Apenas débitos</Checkbox>
           </ModalBody>
 
-          <ModalFooter>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={onCloseSearch}>
+          <ModalFooter display={'flex'} justifyContent={'space-between'}>
+            <Box as='button' onClick={()=>{searchInitialExtract(); onCloseSearch(); setActiveFilter('gray.200')}}>
+            <HStack spacing={4}>
+              <Tag size={'sm'} variant='solid' colorScheme='purple'>
+                <TagLabel mr={2}>Limpar filtros</TagLabel>
+                < TfiClose/>
+              </Tag>
+          </HStack>
+            </Box>
+            <Flex>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{setActiveFilter('red');onCloseSearch(); searchFilter()}}>
               Buscar
             </Button>
             <Button onClick={onCloseSearch}>Cancelar</Button>
+            </Flex>
           </ModalFooter>
         </ModalContent>
       </Modal>

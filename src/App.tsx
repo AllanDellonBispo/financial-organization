@@ -30,13 +30,14 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   Tag,
   TagLabel} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
-import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
+import { AiOutlineArrowLeft, AiOutlineArrowRight, AiTwotoneEdit } from "react-icons/ai";
 import { MdDelete } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
+import { FaFileDownload } from "react-icons/fa";
 import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
-import { Extract, createExtract, deleteRecord, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth } from './hooks/useExtract';
+import { Extract, createExtract, deleteRecord, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
 function App() {
@@ -50,12 +51,14 @@ function App() {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isOpenSearch, onOpen: onOpenSearch, onClose: onCloseSearch } = useDisclosure();
+  const { isOpen: isOpenUpdate, onOpen: onOpenUpdate, onClose: onCloseUpdate } = useDisclosure();
   const [credits, setCredits] = useState(false);
   const [debts, setDebts] = useState(false);
   const [selectedExtract, setSelectedExtract] = useState<Extract>();
-  const [dateInitial, setDateInitial] = useState<Date>();
-  const [dateFinal, setDateFinal] = useState<Date>();
+  const [dateInitial, setDateInitial] = useState<String>();
+  const [dateFinal, setDateFinal] = useState<String>();
   const [activeFilter, setActiveFilter] = useState<String>('gray.200'); 
+  const [proofTransaction, setProofTransaction] = useState<File | null>();
   
   function returnMonth() {
     switch(Number(month)){
@@ -181,22 +184,36 @@ async function deleteExtract(){
   async function create(object:any){
       setActiveFilter('gray.200');
       setLoading(true);
-      createExtract(JSON.stringify(object))
+      object.proofTransaction = proofTransaction;
+      createExtract(object)
       .then(() => {
         searchInitialExtract();
         searchExpenses(Number(month));
         searchReceipt(Number(month));
         successMessage(`Sucesso`, `Transação cadastrada!`, 3000);
-  }).catch((e)=>errorMessage(`Erro`, `${e}`, 6000))
+  }).catch((e:any)=>errorMessage(`Erro`, `${e}`, 6000))
   .finally(()=> setLoading(false));
   }
+
+  async function update(object:any){
+    setActiveFilter('gray.200');
+    setLoading(true);
+    object.proofTransaction = proofTransaction;
+    updateExtract(object)
+    .then(() => {
+      searchInitialExtract();
+      searchExpenses(Number(month));
+      searchReceipt(Number(month));
+      successMessage(`Sucesso`, `Transação atualizada!`, 3000);
+}).catch((e:any)=>errorMessage(`Erro`, `${e}`, 6000))
+.finally(()=> setLoading(false));
+}
 
    useEffect( () => {
     searchInitialExtract();
     searchExpenses(Number(month));
     searchReceipt(Number(month));
   },[]);
-
 
   //Fazer paginação
   //Adicionar gráficos
@@ -293,8 +310,12 @@ async function deleteExtract(){
           </NumberInput>
           </Flex>
         </CardBody>
+        <CardBody >
+          <Text>Comprovante</Text>
+          <Input bg={'yellow'} type='file' placeholder='clique para adicionar o comprovante' {...register("proofTransaction")} onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/>
+        </CardBody>
+
         <CardBody alignSelf={'end'}>
-        
         <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
         </CardBody>
       </Card>
@@ -322,6 +343,19 @@ async function deleteExtract(){
         <Td>{extract.title}</Td>
         <Td textAlign={'end'} fontWeight={'bold'} color={extract.category === 'Débito' ? 'red': 'green'}>R${extract.value.toFixed(2)}</Td>
         <Td textAlign={'center'}>
+
+        <IconButton
+          isRound={true}
+          variant='ghost'
+          colorScheme='facebook'
+          aria-label='Search database'
+          icon={<FaFileDownload  size={'60%'} />} onClick={()=>{onOpen(); setSelectedExtract(extract)}}/>
+        <IconButton
+          isRound={true}
+          variant='ghost'
+          colorScheme='facebook'
+          aria-label='Search database'
+          icon={<AiTwotoneEdit size={'60%'} />} onClick={()=>{onOpen(); setSelectedExtract(extract)}}/>
           <IconButton
           isRound={true}
           variant='ghost'
@@ -358,6 +392,27 @@ async function deleteExtract(){
         </ModalContent>
       </Modal>
 
+      <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader display={'flex'} alignItems={'center'}>
+            <Text color='orange' mr={'4px'}>Atenção</Text>
+            <BsFillExclamationCircleFill color='orange'/>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Text>Deseja excluir essa transação ?</Text>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={deleteExtract}>
+              Tenho certeza
+            </Button>
+            <Button onClick={onClose}>Cancelar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       <Modal closeOnOverlayClick={false} isOpen={isOpenSearch} onClose={onCloseSearch} isCentered>
         <ModalOverlay />
         <ModalContent>
@@ -372,7 +427,7 @@ async function deleteExtract(){
               placeholder="Select Date initial"
               size="md"
               type="date"
-              onChange={(e)=> setDateInitial(new Date(e.target?.value))}
+              onChange={(e)=> setDateInitial(e.target?.value)}
             />
           </ModalBody>
           <ModalBody pb={6}>
@@ -381,7 +436,7 @@ async function deleteExtract(){
               placeholder="Select Date final"
               size="md"
               type="date"
-              onChange={(e)=> setDateFinal(new Date(e.target.value))}
+              onChange={(e)=> setDateFinal(e.target.value)}
             />
           </ModalBody>
           <ModalBody display={'flex'} justifyContent={'space-around'} pb={6}>

@@ -5,7 +5,8 @@ export interface Extract {
     date: Date,
     category: string
     title: string,
-    value: number
+    value: number,
+    proofTransaction: File,
 }
 
 export const searchInitial = async () =>{
@@ -53,7 +54,7 @@ export const searchNextMonth = async (month:number, year:number) =>{
     return extracts;
 }
 
-export const searchPeriod = async (dateInitial: Date | undefined, dateFinal:Date | undefined) =>{
+export const searchPeriod = async (dateInitial: String | undefined, dateFinal: String | undefined) =>{
     let extracts;
     await api.get(`/financial-organizational/extract/filter/${dateInitial}/${dateFinal}`)
     .then(response => {
@@ -62,7 +63,7 @@ export const searchPeriod = async (dateInitial: Date | undefined, dateFinal:Date
     return extracts;
 }
 
-export const searchPeriodReceipt = async (dateInitial: Date | undefined, dateFinal:Date | undefined) =>{
+export const searchPeriodReceipt = async (dateInitial: String | undefined, dateFinal: String | undefined) =>{
     let extracts;
     await api.get(`/financial-organizational/extract/filter/receipt/${dateInitial}/${dateFinal}`)
     .then(response => {
@@ -71,7 +72,7 @@ export const searchPeriodReceipt = async (dateInitial: Date | undefined, dateFin
     return extracts;
 }
 
-export const searchPeriodExpenses = async (dateInitial: Date | undefined, dateFinal:Date | undefined) =>{
+export const searchPeriodExpenses = async (dateInitial: String | undefined, dateFinal: String | undefined) =>{
     let extracts;
     await api.get(`/financial-organizational/extract/filter/expenses/${dateInitial}/${dateFinal}`)
     .then(response => {
@@ -80,10 +81,22 @@ export const searchPeriodExpenses = async (dateInitial: Date | undefined, dateFi
     return extracts;
 }
 
-
 export const createExtract = async (extract:any) => {
-    await api.post(`/financial-organizational/extract`, extract)
-    .then(response => console.log(response.data));
+    await api.post(`/financial-organizational/extract`, extract
+    
+    ,{
+        headers:
+            {'Content-Type': 'multipart/form-data'},
+    })
+}
+
+export const updateExtract = async (extract:any) => {
+    await api.put(`/financial-organizational/extract`, extract
+    
+    ,{
+        headers:
+            {'Content-Type': 'multipart/form-data'},
+    })
 }
 
 export const deleteRecord = async (id:number) =>{

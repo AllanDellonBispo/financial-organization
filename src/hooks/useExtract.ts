@@ -104,4 +104,8 @@ export const deleteRecord = async (id:number) =>{
 
 }
 
+export const downloadFiles = async (id:number) =>{
+    return `${api.toString()}/financial-organizational/extract/fileDownload/${id}`
+}
+
 //Tratar retorno de mensagens

@@ -28,17 +28,20 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   Checkbox,
   HStack,
   Tag,
-  TagLabel} from '@chakra-ui/react';
+  TagLabel,
+  FormLabel,
+  Link} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight, AiTwotoneEdit } from "react-icons/ai";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, MdFileDownloadDone, MdOutlineClose } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
-import { FaFileDownload } from "react-icons/fa";
+import { FaFileDownload, FaRegEdit } from "react-icons/fa";
 import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
-import { Extract, createExtract, deleteRecord, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from './hooks/useExtract';
+import { Extract, createExtract, deleteRecord, downloadFiles, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
+
 
 function App() {
 
@@ -59,7 +62,7 @@ function App() {
   const [dateFinal, setDateFinal] = useState<String>();
   const [activeFilter, setActiveFilter] = useState<String>('gray.200'); 
   const [proofTransaction, setProofTransaction] = useState<File | null>();
-  
+
   function returnMonth() {
     switch(Number(month)){
       case 1:
@@ -187,6 +190,7 @@ async function deleteExtract(){
       object.proofTransaction = proofTransaction;
       createExtract(object)
       .then(() => {
+        setProofTransaction(null);
         searchInitialExtract();
         searchExpenses(Number(month));
         searchReceipt(Number(month));
@@ -195,18 +199,27 @@ async function deleteExtract(){
   .finally(()=> setLoading(false));
   }
 
-  async function update(object:any){
+  async function update(data:any){
+    console.log('Foiiiii1',selectedExtract)
     setActiveFilter('gray.200');
     setLoading(true);
-    object.proofTransaction = proofTransaction;
-    updateExtract(object)
+    data.proofTransactionUpdate = proofTransaction;
+    data.id = selectedExtract?.id;
+    console.log('Foiiiii2',data)
+    updateExtract(data)
     .then(() => {
+      setProofTransaction(null);
       searchInitialExtract();
       searchExpenses(Number(month));
       searchReceipt(Number(month));
+      onCloseUpdate();
       successMessage(`Sucesso`, `Transação atualizada!`, 3000);
 }).catch((e:any)=>errorMessage(`Erro`, `${e}`, 6000))
 .finally(()=> setLoading(false));
+}
+
+const dateFormated = (dateValue: Date | undefined) => {
+  return String(dateValue).toString().substring(0,10);
 }
 
    useEffect( () => {
@@ -272,7 +285,7 @@ async function deleteExtract(){
         </CardBody>
       </Card>
 
-    <Flex as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
+    <Flex id='formCreate' as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
       <Card direction={'row'} >
         <CardBody>
           <Flex direction={'column'}>
@@ -312,9 +325,29 @@ async function deleteExtract(){
         </CardBody>
         <CardBody >
           <Text>Comprovante</Text>
-          <Input bg={'yellow'} type='file' placeholder='clique para adicionar o comprovante' {...register("proofTransaction")} onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/>
+          <Flex justifyContent={'center'} alignItems={'center'}>
+          <FormLabel htmlFor='proofTransactionUpload' w={'100%'} border={'1px solid #f0f3f7'} borderRadius={4} bg={proofTransaction ? 'green' : 'white'} display={'flex'} justifyContent={'center'} >
+          {!proofTransaction ?
+          <Text fontSize={14} color={'gray.400'} textAlign={'center'}>Clique para adicionar</Text> :
+       
+            <MdFileDownloadDone fontSize={40} color={proofTransaction ? 'white' : 'gray'} width={'100%'}/>
+          
+          }
+          <Input
+          id='proofTransactionUpload'
+          type='file'
+          placeholder='clique para adicionar o comprovante' 
+          display={'none'}
+          {...register("proofTransaction")}
+          onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/>
+          </FormLabel>
+          {proofTransaction ?
+          <MdOutlineClose fontSize={20} onClick={()=>setProofTransaction(null)}/> :
+          ''
+        }
+          </Flex>
+          
         </CardBody>
-
         <CardBody alignSelf={'end'}>
         <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
         </CardBody>
@@ -344,18 +377,25 @@ async function deleteExtract(){
         <Td textAlign={'end'} fontWeight={'bold'} color={extract.category === 'Débito' ? 'red': 'green'}>R${extract.value.toFixed(2)}</Td>
         <Td textAlign={'center'}>
 
+        <Link href={`${downloadFiles(Number(selectedExtract?.id))}`} target='_self'>
         <IconButton
           isRound={true}
           variant='ghost'
           colorScheme='facebook'
           aria-label='Search database'
-          icon={<FaFileDownload  size={'60%'} />} onClick={()=>{onOpen(); setSelectedExtract(extract)}}/>
+          icon={<FaFileDownload  size={'60%'} />} onClick={()=>{setSelectedExtract(extract)}}/>
+          </Link>
+
         <IconButton
           isRound={true}
           variant='ghost'
           colorScheme='facebook'
           aria-label='Search database'
-          icon={<AiTwotoneEdit size={'60%'} />} onClick={()=>{onOpen(); setSelectedExtract(extract)}}/>
+          icon={<AiTwotoneEdit size={'60%'} />} onClick={()=>{
+                                                              setSelectedExtract(extract);
+                                                              setProofTransaction(extract.proofTransaction);
+                                                              onOpenUpdate()}}
+          />
           <IconButton
           isRound={true}
           variant='ghost'
@@ -392,23 +432,98 @@ async function deleteExtract(){
         </ModalContent>
       </Modal>
 
-      <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal closeOnOverlayClick={false} isOpen={isOpenUpdate} onClose={onCloseUpdate} isCentered>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader display={'flex'} alignItems={'center'}>
-            <Text color='orange' mr={'4px'}>Atenção</Text>
-            <BsFillExclamationCircleFill color='orange'/>
+            <Text  mr={'4px'}>Realize as alterações necessárias</Text>
+            <FaRegEdit/>
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            <Text>Deseja excluir essa transação ?</Text>
+
+          <Flex id='formUpdate' as={'form'} onSubmit={(event)=>{event.stopPropagation(); handleSubmit(update)(event)}} display={'flex'} flexDirection={'column'} w={'100%'}>
+            <Card direction={'column'} >
+
+              <Flex>
+              <CardBody>
+                <Text>Data</Text>
+                <Input
+                placeholder="Selecione uma data"
+                size="md"
+                type="date"
+                required
+                {...register("dateUpdate")}
+                defaultValue={dateFormated(selectedExtract?.date)}
+                />
+              </CardBody>
+
+              <CardBody>
+              <Text>Categoria</Text>
+              {selectedExtract?.category === 'Crédito' ?
+              <Select {...register("categoryUpdate")}>
+                <option value='Crédito'>Creditar</option>
+                <option value='Débito'>Debitar</option>
+              </Select>:
+              <Select {...register("categoryUpdate")}>
+              <option value='Débito'>Debitar</option>
+              <option value='Crédito'>Creditar</option>
+            </Select>}
+              </CardBody>
+              </Flex>
+
+        <CardBody>
+          <Text>Titulo</Text>
+          <Input required {...register("titleUpdate")} defaultValue={selectedExtract?.title}/>
+        </CardBody>
+
+        <Flex>
+        <CardBody>
+          <Text>Valor</Text>
+          <Flex>
+          {/* <Text fontSize={'28px'}>R$</Text> */}
+          <NumberInput defaultValue={selectedExtract?.value} min={0.1} max={99999999} >
+            <NumberInputField required {...register("valueUpdate")} />
+            <NumberInputStepper>
+            <NumberIncrementStepper />
+            <NumberDecrementStepper />
+            </NumberInputStepper>
+          </NumberInput>
+          </Flex>
+        </CardBody>
+        <CardBody >
+          <Text>Comprovante</Text>
+          {/* <Input bg={'yellow'} type='file' placeholder='clique para adicionar o comprovante' {...register("proofTransactionUpload")} onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/> */}
+          <Flex justifyContent={'center'} alignItems={'center'}>
+          <FormLabel htmlFor='proofTransactionUpdate' w={'100%'} h={10} border={'1px solid #f0f3f7'} borderRadius={4} bg={proofTransaction ? 'green' : 'white'} display={'flex'} justifyContent={'center'} >
+          {!proofTransaction ?
+          <Text fontSize={14} color={'gray.400'} textAlign={'center'}>Clique para adicionar</Text> :
+          <MdFileDownloadDone fontSize={40} color={proofTransaction ? 'white' : 'gray'} width={'100%'}/>
+          }
+          <Input
+          id='proofTransactionUpdate'
+          type='file'
+          placeholder='clique para adicionar o comprovante' 
+          display={'none'}
+          {...register("proofTransactionUpdate")}
+          onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/>
+          </FormLabel>
+          {proofTransaction ?
+          <MdOutlineClose fontSize={20} onClick={()=>setProofTransaction(null)}/> :
+          ''
+        }
+          </Flex>
+        </CardBody>
+        </Flex>
+      </Card>
+      </Flex>
           </ModalBody>
 
           <ModalFooter>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={deleteExtract}>
-              Tenho certeza
+            <Button type='submit' justifyContent={'space-between'} isLoading={loading} bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>handleSubmit(update)}>
+              Atualizar
             </Button>
-            <Button onClick={onClose}>Cancelar</Button>
+            <Button onClick={()=>{onCloseUpdate()}}>Cancelar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -42,7 +42,6 @@ import { VscSettings } from "react-icons/vsc";
 import { Extract, createExtract, deleteRecord, downloadFiles, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
 
-
 function App() {
 
   const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
@@ -62,6 +61,10 @@ function App() {
   const [dateFinal, setDateFinal] = useState<String>();
   const [activeFilter, setActiveFilter] = useState<String>('gray.200'); 
   const [proofTransaction, setProofTransaction] = useState<File | null>();
+  const [dateUpdate, setDateUpdate] = useState<Date>();
+  const [categoryUpdate, setCategoryUpdate] = useState<string>('');
+  const [titleUpdate, setTitleUpdate] = useState<string>('');
+  const [valueUpdate, setValueUpdate] = useState<number>();
 
   function returnMonth() {
     switch(Number(month)){
@@ -199,14 +202,18 @@ async function deleteExtract(){
   .finally(()=> setLoading(false));
   }
 
-  async function update(data:any){
-    console.log('Foiiiii1',selectedExtract)
+  async function update(){
+    const obj = new Object({
+      id:selectedExtract?.id,
+      dateUpdate: dateUpdate ? dateFormated(dateUpdate) : dateFormated(selectedExtract?.date),
+      categoryUpdate,
+      titleUpdate,
+      valueUpdate,
+      proofTransactionUpdate: proofTransaction ? proofTransaction : selectedExtract?.proofTransaction
+    });
     setActiveFilter('gray.200');
     setLoading(true);
-    data.proofTransactionUpdate = proofTransaction;
-    data.id = selectedExtract?.id;
-    console.log('Foiiiii2',data)
-    updateExtract(data)
+    updateExtract(obj)
     .then(() => {
       setProofTransaction(null);
       searchInitialExtract();
@@ -219,7 +226,7 @@ async function deleteExtract(){
 }
 
 const dateFormated = (dateValue: Date | undefined) => {
-  return String(dateValue).toString().substring(0,10);
+  return dateValue ? String(new Date(dateValue).toISOString().substring(0,10)) : '';
 }
 
    useEffect( () => {
@@ -377,13 +384,13 @@ const dateFormated = (dateValue: Date | undefined) => {
         <Td textAlign={'end'} fontWeight={'bold'} color={extract.category === 'Débito' ? 'red': 'green'}>R${extract.value.toFixed(2)}</Td>
         <Td textAlign={'center'}>
 
-        <Link href={`${downloadFiles(Number(selectedExtract?.id))}`} target='_self'>
+        <Link href={`${downloadFiles(Number(extract?.id))}`} target='_self'>
         <IconButton
           isRound={true}
           variant='ghost'
           colorScheme='facebook'
           aria-label='Search database'
-          icon={<FaFileDownload  size={'60%'} />} onClick={()=>{setSelectedExtract(extract)}}/>
+          icon={<FaFileDownload  size={'60%'} />}/>
           </Link>
 
         <IconButton
@@ -442,7 +449,7 @@ const dateFormated = (dateValue: Date | undefined) => {
           <ModalCloseButton />
           <ModalBody pb={6}>
 
-          <Flex id='formUpdate' as={'form'} onSubmit={(event)=>{event.stopPropagation(); handleSubmit(update)(event)}} display={'flex'} flexDirection={'column'} w={'100%'}>
+          <Flex id='formUpdate' as={'form'} display={'flex'} flexDirection={'column'} w={'100%'}>
             <Card direction={'column'} >
 
               <Flex>
@@ -455,17 +462,18 @@ const dateFormated = (dateValue: Date | undefined) => {
                 required
                 {...register("dateUpdate")}
                 defaultValue={dateFormated(selectedExtract?.date)}
+                onChange={(e)=>setDateUpdate(new Date(e.target.value))}
                 />
               </CardBody>
 
               <CardBody>
               <Text>Categoria</Text>
               {selectedExtract?.category === 'Crédito' ?
-              <Select {...register("categoryUpdate")}>
+              <Select {...register("categoryUpdate")} onChange={(e)=> setCategoryUpdate(e.target.value)}>
                 <option value='Crédito'>Creditar</option>
                 <option value='Débito'>Debitar</option>
               </Select>:
-              <Select {...register("categoryUpdate")}>
+              <Select {...register("categoryUpdate")} onChange={(e)=> setCategoryUpdate(e.target.value)}>
               <option value='Débito'>Debitar</option>
               <option value='Crédito'>Creditar</option>
             </Select>}
@@ -474,7 +482,12 @@ const dateFormated = (dateValue: Date | undefined) => {
 
         <CardBody>
           <Text>Titulo</Text>
-          <Input required {...register("titleUpdate")} defaultValue={selectedExtract?.title}/>
+          <Input
+           required {...register("titleUpdate")}
+           defaultValue={selectedExtract?.title}
+           onChange={(e)=>setTitleUpdate(e.target.value)} 
+          //  onChange={(e)=> setExtractUpdate({...setExtractUpdate, title:e.target.value})}
+           />
         </CardBody>
 
         <Flex>
@@ -482,8 +495,8 @@ const dateFormated = (dateValue: Date | undefined) => {
           <Text>Valor</Text>
           <Flex>
           {/* <Text fontSize={'28px'}>R$</Text> */}
-          <NumberInput defaultValue={selectedExtract?.value} min={0.1} max={99999999} >
-            <NumberInputField required {...register("valueUpdate")} />
+          <NumberInput defaultValue={selectedExtract?.value} min={0.1} max={99999999}>
+            <NumberInputField required {...register("valueUpdate")} onChange={(e)=> setValueUpdate(Number(e.target.value))} />
             <NumberInputStepper>
             <NumberIncrementStepper />
             <NumberDecrementStepper />
@@ -520,7 +533,7 @@ const dateFormated = (dateValue: Date | undefined) => {
           </ModalBody>
 
           <ModalFooter>
-            <Button type='submit' justifyContent={'space-between'} isLoading={loading} bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>handleSubmit(update)}>
+            <Button type='submit' justifyContent={'space-between'} isLoading={loading} bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={update}>
               Atualizar
             </Button>
             <Button onClick={()=>{onCloseUpdate()}}>Cancelar</Button>

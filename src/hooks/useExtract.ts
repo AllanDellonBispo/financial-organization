@@ -3,7 +3,7 @@ import { api } from "../services/api"
 export interface Extract {
     id: number,
     date: Date,
-    category: string
+    category: string,
     title: string,
     value: number,
     proofTransaction: File,
@@ -104,8 +104,9 @@ export const deleteRecord = async (id:number) =>{
 
 }
 
-export const downloadFiles = async (id:number) =>{
-    return `${api.toString()}/financial-organizational/extract/fileDownload/${id}`
+export const downloadFiles = (id:number) =>{
+    // return `http://${api.toString()}/financial-organizational/extract/fileDownload/${id}`;
+    return  `http://localhost:4000/financial-organizational/extract/fileDownload/${id}`
 }
 
 //Tratar retorno de mensagens

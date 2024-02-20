@@ -30,17 +30,25 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   Tag,
   TagLabel,
   FormLabel,
-  Link} from '@chakra-ui/react';
+  Link,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight, AiTwotoneEdit } from "react-icons/ai";
-import { MdDelete, MdFileDownloadDone, MdOutlineClose } from "react-icons/md";
+import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn  } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
 import { FaFileDownload, FaRegEdit } from "react-icons/fa";
 import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
+import { TiThMenu } from "react-icons/ti";
 import { Extract, createExtract, deleteRecord, downloadFiles, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from './hooks/useExtract';
 import { useForm } from 'react-hook-form';
+import { Payment, searchPayments } from './hooks/usePayment';
 
 function App() {
 
@@ -54,6 +62,7 @@ function App() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isOpenSearch, onOpen: onOpenSearch, onClose: onCloseSearch } = useDisclosure();
   const { isOpen: isOpenUpdate, onOpen: onOpenUpdate, onClose: onCloseUpdate } = useDisclosure();
+  const { isOpen: isOpenMenu, onOpen: onOpenMenu, onClose: onCloseMenu } = useDisclosure();
   const [credits, setCredits] = useState(false);
   const [debts, setDebts] = useState(false);
   const [selectedExtract, setSelectedExtract] = useState<Extract>();
@@ -65,6 +74,9 @@ function App() {
   const [categoryUpdate, setCategoryUpdate] = useState<string>('');
   const [titleUpdate, setTitleUpdate] = useState<string>('');
   const [valueUpdate, setValueUpdate] = useState<number>();
+
+  const [payments, setPayments] = useState<Payment[]>();
+  const [menuPayment, setMenuPayment] = useState<boolean>(false);
 
   function returnMonth() {
     switch(Number(month)){
@@ -229,6 +241,10 @@ const dateFormated = (dateValue: Date | undefined) => {
   return dateValue ? String(new Date(dateValue).toISOString().substring(0,10)) : '';
 }
 
+async function searchPaymentsInitial(){
+  setPayments(await searchPayments());
+}
+
    useEffect( () => {
     searchInitialExtract();
     searchExpenses(Number(month));
@@ -242,13 +258,13 @@ const dateFormated = (dateValue: Date | undefined) => {
   return (
     <Box>
       <Heading>
-        <Flex bg={'#4B0082'} color={'white'} h={'150px'} fontSize={28} display={'flex'} justifyContent={'space-between'} align={'center'}>
+        <Flex bg={'#4B0082'} color={'white'} h={'120px'} fontSize={28} display={'flex'} justifyContent={'space-between'} align={'center'}>
           <Box ml={'4%'}>
-            <RiMoneyDollarCircleLine size={'30%'}/>
+            <TiThMenu size={'10%'} onClick={onOpenMenu}/>
           </Box>
           <Text>Sistema Financeiro</Text>
           <Box>
-            <RiMoneyDollarCircleLine size={'30%'}/>
+            <RiMoneyDollarCircleLine size={'20%'}/>
           </Box>
         </Flex>
       </Heading>
@@ -291,7 +307,7 @@ const dateFormated = (dateValue: Date | undefined) => {
           </Flex>
         </CardBody>
       </Card>
-
+      
     <Flex id='formCreate' as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
       <Card direction={'row'} >
         <CardBody>
@@ -346,7 +362,7 @@ const dateFormated = (dateValue: Date | undefined) => {
           placeholder='clique para adicionar o comprovante' 
           display={'none'}
           {...register("proofTransaction")}
-          onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/>
+          onChange={(e:any)=>setProofTransaction(e.target.files?.item(0))}/>
           </FormLabel>
           {proofTransaction ?
           <MdOutlineClose fontSize={20} onClick={()=>setProofTransaction(null)}/> :
@@ -362,19 +378,32 @@ const dateFormated = (dateValue: Date | undefined) => {
       </Flex>
 
   <TableContainer w={'1000px'} >
-  <Table variant='striped'>
+  <Table variant='striped' w={'100%'}>
     <TableCaption fontWeight={'bold'}>Dados correspondente ao mês de {returnMonth()}</TableCaption>
     <Thead>
+      
+      {!menuPayment ?
       <Tr>
         <Th>Data</Th>
         <Th>Categoria</Th>
         <Th>Título</Th>
         <Th isNumeric>Valor</Th>
         <Th textAlign={'center'}>opções</Th>
-      </Tr>
+      </Tr>:
+      
+      <Tr>
+        <Th>Nome</Th>
+        <Th>Descrição</Th>
+        <Th>Categoria</Th>
+        <Th isNumeric>Valor</Th>
+        <Th isNumeric>Total</Th>
+        <Th>Status</Th>
+        <Th textAlign={'center'}>opções</Th>
+      </Tr> }
     </Thead>
+
     <Tbody>
-      {extractsInitial?.map((extract) => {
+      {!menuPayment ? extractsInitial?.map((extract) => {
       return(
         <>
        <Tr key={extract.id}>
@@ -413,7 +442,49 @@ const dateFormated = (dateValue: Date | undefined) => {
      </Tr>
      </>
       )
-      })}
+      }):
+      
+      payments?.map((payment) => {
+        return(
+          <>
+         <Tr key={payment.id}>
+          <Td>{payment.name}</Td>
+          <Td>{payment.description}</Td>
+          <Td>{payment.category.charAt(0).toUpperCase()+payment.category.substring(1)}</Td>
+          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.value.toFixed(2)}</Td>
+          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.value.toFixed(2)}</Td>
+          <Td color={payment.status === 'N' ? 'red' : 'green'} fontWeight='bold'>{payment.status === 'N' ? 'Pendente' : 'Realizado'}</Td>
+          <Td textAlign={'center'}>
+
+          <IconButton
+            isRound={true}
+            variant='ghost'
+            colorScheme='green'
+            aria-label='Search database'
+            icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{onOpen(); /*setSelectedExtract(payment)*/}}/>
+  
+          <IconButton
+            isRound={true}
+            variant='ghost'
+            colorScheme='facebook'
+            aria-label='Search database'
+            icon={<AiTwotoneEdit size={'60%'} />} onClick={()=>{
+                                                                // setSelectedExtract(payment);
+                                                                // setProofTransaction(payment.proofTransaction);
+                                                                onOpenUpdate()}}
+            />
+            <IconButton
+            isRound={true}
+            variant='ghost'
+            colorScheme='red'
+            aria-label='Search database'
+            icon={<MdDelete size={'60%'} />} onClick={()=>{onOpen(); /*setSelectedExtract(payment)*/}}/>
+        </Td>
+       </Tr>
+       </>
+        )
+        })
+      }
     </Tbody>
   </Table>
 </TableContainer>
@@ -462,18 +533,18 @@ const dateFormated = (dateValue: Date | undefined) => {
                 required
                 {...register("dateUpdate")}
                 defaultValue={dateFormated(selectedExtract?.date)}
-                onChange={(e)=>setDateUpdate(new Date(e.target.value))}
+                onChange={(e:any)=>setDateUpdate(new Date(e.target.value))}
                 />
               </CardBody>
 
               <CardBody>
               <Text>Categoria</Text>
               {selectedExtract?.category === 'Crédito' ?
-              <Select {...register("categoryUpdate")} onChange={(e)=> setCategoryUpdate(e.target.value)}>
+              <Select {...register("categoryUpdate")} onChange={(e:any)=> setCategoryUpdate(e.target.value)}>
                 <option value='Crédito'>Creditar</option>
                 <option value='Débito'>Debitar</option>
               </Select>:
-              <Select {...register("categoryUpdate")} onChange={(e)=> setCategoryUpdate(e.target.value)}>
+              <Select {...register("categoryUpdate")} onChange={(e:any)=> setCategoryUpdate(e.target.value)}>
               <option value='Débito'>Debitar</option>
               <option value='Crédito'>Creditar</option>
             </Select>}
@@ -485,7 +556,7 @@ const dateFormated = (dateValue: Date | undefined) => {
           <Input
            required {...register("titleUpdate")}
            defaultValue={selectedExtract?.title}
-           onChange={(e)=>setTitleUpdate(e.target.value)} 
+           onChange={(e:any)=>setTitleUpdate(e.target.value)} 
           //  onChange={(e)=> setExtractUpdate({...setExtractUpdate, title:e.target.value})}
            />
         </CardBody>
@@ -496,7 +567,7 @@ const dateFormated = (dateValue: Date | undefined) => {
           <Flex>
           {/* <Text fontSize={'28px'}>R$</Text> */}
           <NumberInput defaultValue={selectedExtract?.value} min={0.1} max={99999999}>
-            <NumberInputField required {...register("valueUpdate")} onChange={(e)=> setValueUpdate(Number(e.target.value))} />
+            <NumberInputField required {...register("valueUpdate")} onChange={(e:any)=> setValueUpdate(Number(e.target.value))} />
             <NumberInputStepper>
             <NumberIncrementStepper />
             <NumberDecrementStepper />
@@ -519,7 +590,7 @@ const dateFormated = (dateValue: Date | undefined) => {
           placeholder='clique para adicionar o comprovante' 
           display={'none'}
           {...register("proofTransactionUpdate")}
-          onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/>
+          onChange={(e:any)=>setProofTransaction(e.target.files?.item(0))}/>
           </FormLabel>
           {proofTransaction ?
           <MdOutlineClose fontSize={20} onClick={()=>setProofTransaction(null)}/> :
@@ -555,7 +626,7 @@ const dateFormated = (dateValue: Date | undefined) => {
               placeholder="Select Date initial"
               size="md"
               type="date"
-              onChange={(e)=> setDateInitial(e.target?.value)}
+              onChange={(e:any)=> setDateInitial(e.target?.value)}
             />
           </ModalBody>
           <ModalBody pb={6}>
@@ -564,7 +635,7 @@ const dateFormated = (dateValue: Date | undefined) => {
               placeholder="Select Date final"
               size="md"
               type="date"
-              onChange={(e)=> setDateFinal(e.target.value)}
+              onChange={(e:any)=> setDateFinal(e.target.value)}
             />
           </ModalBody>
           <ModalBody display={'flex'} justifyContent={'space-around'} pb={6}>
@@ -590,6 +661,33 @@ const dateFormated = (dateValue: Date | undefined) => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <Drawer
+        isOpen={isOpenMenu}
+        placement='left'
+        onClose={onCloseMenu}
+        // finalFocusRef={btnRef}
+      >
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton />
+          <DrawerHeader>Menu</DrawerHeader>
+
+          <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
+                  <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false)}} >Início</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); setMenuPayment(true)}} >Colaboradores</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); setMenuPayment(true)}} >Acertos</Link>
+                  <Link>Estatísticas</Link>
+          </DrawerBody>
+
+          {/* <DrawerFooter>
+            <Button variant='outline' mr={3} onClick={onCloseMenu}>
+              Vontar
+            </Button>
+            <Button colorScheme='blue'>Save</Button>
+          </DrawerFooter> */}
+        </DrawerContent>
+      </Drawer>
 
 
       </Flex>

@@ -17,3 +17,8 @@ export const searchPayments = async () => {
     });
     return payments;
 }
+
+export const createPayment = async (payment:any) => {
+    await api.post(`/financial-organizational/payment`, payment);
+
+}

@@ -36,7 +36,8 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   DrawerHeader,
   DrawerOverlay,
   DrawerContent,
-  DrawerCloseButton} from '@chakra-ui/react';
+  DrawerCloseButton,
+  DrawerFooter} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight, AiTwotoneEdit } from "react-icons/ai";
 import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn  } from "react-icons/md";
@@ -46,11 +47,13 @@ import { FaFileDownload, FaRegEdit } from "react-icons/fa";
 import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
 import { TiThMenu } from "react-icons/ti";
-import { Extract, createExtract, deleteRecord, downloadFiles, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from './hooks/useExtract';
+import { ImExit } from "react-icons/im";
+import { Extract, createExtract, deleteRecord, downloadFiles, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { useForm } from 'react-hook-form';
-import { Payment, searchPayments } from './hooks/usePayment';
+import { Payment, createPayment, searchPayments } from '../hooks/usePayment';
+import { Link as LinkRouter } from "react-router-dom";
 
-function App() {
+function Home() {
 
   const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
   const [expensesTotal, setExpensesTotal] = useState<Number>();
@@ -245,6 +248,18 @@ async function searchPaymentsInitial(){
   setPayments(await searchPayments());
 }
 
+async function createPayments(object:any){
+  console.log('Foiiii')
+  setActiveFilter('gray.200');
+  setLoading(true);
+  createPayment(JSON.stringify(object))
+  .then(() => {
+    searchPaymentsInitial();
+    successMessage(`Sucesso`, `Despesa cadastrada!`, 3000);
+}).catch((e:any)=>errorMessage(`Erro`, `${e}`, 6000))
+.finally(()=> setLoading(false));
+}
+
    useEffect( () => {
     searchInitialExtract();
     searchExpenses(Number(month));
@@ -308,6 +323,7 @@ async function searchPaymentsInitial(){
         </CardBody>
       </Card>
       
+    {!menuPayment ?
     <Flex id='formCreate' as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
       <Card direction={'row'} >
         <CardBody>
@@ -375,7 +391,64 @@ async function searchPaymentsInitial(){
         <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
         </CardBody>
       </Card>
-      </Flex>
+      </Flex>:
+      
+      <Flex as={'form'} onSubmit={handleSubmit(createPayments)} display={'flex'} w={'1000px'}>
+      <Card direction={'row'} >
+        <CardBody>
+          <Flex direction={'column'}>
+            <Text>Nome</Text>
+            <Input
+            placeholder="Fulano..."
+            size="md"
+            type="text"
+            required
+            {...register("name")}
+            />
+          </Flex>
+        </CardBody>
+
+        <CardBody>
+          <Flex direction={'column'}>
+            <Text>Descrição</Text>
+            <Input
+            placeholder="Limpeza..."
+            size="md"
+            type="text"
+            required
+            {...register("description")}
+            w={'100%'}
+            />
+          </Flex>
+        </CardBody>
+
+        <CardBody>
+          <Text>Categoria</Text>
+          <Select w={'150px'} {...register("category")}>
+          <option value='Fixo'>Fixo</option>
+          <option value='Porcentagem'>Porcentagem</option>
+          </Select>
+        </CardBody>
+
+        <CardBody>
+          <Text>Valor/salário</Text>
+          <Flex>
+          {/* <Text fontSize={'28px'}>R$</Text> */}
+          <NumberInput defaultValue={100} min={0.1} max={99999999} >
+            <NumberInputField required {...register("value")} />
+            <NumberInputStepper>
+            <NumberIncrementStepper />
+            <NumberDecrementStepper />
+            </NumberInputStepper>
+          </NumberInput>
+          </Flex>
+        </CardBody>
+
+        <CardBody alignSelf={'end'}>
+        <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
+        </CardBody>
+      </Card>
+      </Flex>}
 
   <TableContainer w={'1000px'} >
   <Table variant='striped' w={'100%'}>
@@ -394,7 +467,7 @@ async function searchPaymentsInitial(){
       <Tr>
         <Th>Nome</Th>
         <Th>Descrição</Th>
-        <Th>Categoria</Th>
+        {/* <Th>Categoria</Th> */}
         <Th isNumeric>Valor</Th>
         <Th isNumeric>Total</Th>
         <Th>Status</Th>
@@ -450,9 +523,9 @@ async function searchPaymentsInitial(){
          <Tr key={payment.id}>
           <Td>{payment.name}</Td>
           <Td>{payment.description}</Td>
-          <Td>{payment.category.charAt(0).toUpperCase()+payment.category.substring(1)}</Td>
-          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.value.toFixed(2)}</Td>
-          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.value.toFixed(2)}</Td>
+          {/* <Td>{payment.category.charAt(0).toUpperCase()+payment.category.substring(1)}</Td> */}
+          <Td textAlign={'end'} fontWeight={'bold'}>{payment.category === 'Fixo' ? 'R$' : '%'}{payment.value.toFixed(2)}</Td>
+          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.category === 'Fixo' ? payment.value.toFixed(2) : (payment.value/100) * (Number(receiptTotal) - Number(expensesTotal))}</Td>
           <Td color={payment.status === 'N' ? 'red' : 'green'} fontWeight='bold'>{payment.status === 'N' ? 'Pendente' : 'Realizado'}</Td>
           <Td textAlign={'center'}>
 
@@ -680,12 +753,11 @@ async function searchPaymentsInitial(){
                   <Link>Estatísticas</Link>
           </DrawerBody>
 
-          {/* <DrawerFooter>
-            <Button variant='outline' mr={3} onClick={onCloseMenu}>
-              Vontar
-            </Button>
-            <Button colorScheme='blue'>Save</Button>
-          </DrawerFooter> */}
+          <DrawerFooter>
+            <LinkRouter to='/'>
+              <ImExit color='red' size={22}/>
+            </LinkRouter>
+          </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
@@ -695,4 +767,4 @@ async function searchPaymentsInitial(){
   );
 }
 
-export default App;
+export default Home;

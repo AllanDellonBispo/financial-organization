@@ -48,9 +48,9 @@ import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
 import { TiThMenu } from "react-icons/ti";
 import { ImExit } from "react-icons/im";
-import { Extract, createExtract, deleteRecord, downloadFiles, expenses, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
+import { Extract, createExtract, deleteRecord, downloadFiles, expenses, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { useForm } from 'react-hook-form';
-import { Payment, createPayment, searchPayments } from '../hooks/usePayment';
+import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter } from "react-router-dom";
 
 function Home() {
@@ -61,12 +61,16 @@ function Home() {
   const [month, setMonth] = useState<Number>(Number(new Date().getMonth())+1);
   const [loading, setLoading] = useState(false);
   const {register, handleSubmit} = useForm();
+
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+
   const { isOpen: isOpenSearch, onOpen: onOpenSearch, onClose: onCloseSearch } = useDisclosure();
   const { isOpen: isOpenUpdate, onOpen: onOpenUpdate, onClose: onCloseUpdate } = useDisclosure();
   const { isOpen: isOpenMenu, onOpen: onOpenMenu, onClose: onCloseMenu } = useDisclosure();
+  const { isOpen: isOpenPayment, onOpen: onOpenPayment, onClose: onClosePayment } = useDisclosure();
   const [credits, setCredits] = useState(false);
+
   const [debts, setDebts] = useState(false);
   const [selectedExtract, setSelectedExtract] = useState<Extract>();
   const [dateInitial, setDateInitial] = useState<String>();
@@ -74,12 +78,16 @@ function Home() {
   const [activeFilter, setActiveFilter] = useState<String>('gray.200'); 
   const [proofTransaction, setProofTransaction] = useState<File | null>();
   const [dateUpdate, setDateUpdate] = useState<Date>();
+
+  // const [updateExtract, setUpdateExtract] = useState<Extract>();
   const [categoryUpdate, setCategoryUpdate] = useState<string>('');
   const [titleUpdate, setTitleUpdate] = useState<string>('');
   const [valueUpdate, setValueUpdate] = useState<number>();
+  const [paymentsMonth, setPaymentsMonth] = useState([]);
 
   const [payments, setPayments] = useState<Payment[]>();
   const [menuPayment, setMenuPayment] = useState<boolean>(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment>();
 
   function returnMonth() {
     switch(Number(month)){
@@ -154,6 +162,21 @@ function Home() {
   async function searchInitialExtract(){
     setExtractsInitial(await searchInitial());
   }
+
+  async function searchPaymentsMonth(){
+    const payments = await paymentsOfMonth(Number(month));
+    if(payments != null){
+     setPaymentsMonth(payments);
+    //  console.log(paymentsMonth.filter((e:any)=>console.log(e.title)))
+    }
+  }
+
+  function verifyPayment(name : string): string | undefined{
+    if (name) {
+      const payment = paymentsMonth.find((e: any) => e.title === name);
+      return payment ? 'green' : 'red';
+    }
+  }
   
   async function previousMonth(){
     if(Number(month) > 1){
@@ -225,6 +248,7 @@ async function deleteExtract(){
       titleUpdate,
       valueUpdate,
       proofTransactionUpdate: proofTransaction ? proofTransaction : selectedExtract?.proofTransaction
+      //Atualizar ternário por ??
     });
     setActiveFilter('gray.200');
     setLoading(true);
@@ -249,14 +273,22 @@ async function searchPaymentsInitial(){
 }
 
 async function createPayments(object:any){
-  console.log('Foiiii')
-  setActiveFilter('gray.200');
   setLoading(true);
   createPayment(JSON.stringify(object))
   .then(() => {
     searchPaymentsInitial();
     successMessage(`Sucesso`, `Despesa cadastrada!`, 3000);
 }).catch((e:any)=>errorMessage(`Erro`, `${e}`, 6000))
+.finally(()=> setLoading(false));
+}
+
+async function finalizePayment(id:number){
+  setLoading(true);
+  await makePayment(id)
+  .then(() => {
+    searchPaymentsInitial();
+    successMessage(`Sucesso`, `Pagemento realizado!`, 3000);
+}).catch((e:Error)=>errorMessage(`Erro`, `${e.message}`, 6000))
 .finally(()=> setLoading(false));
 }
 
@@ -268,7 +300,6 @@ async function createPayments(object:any){
 
   //Fazer paginação
   //Adicionar gráficos
-  //Adicionar notas fiscais
 
   return (
     <Box>
@@ -525,8 +556,8 @@ async function createPayments(object:any){
           <Td>{payment.description}</Td>
           {/* <Td>{payment.category.charAt(0).toUpperCase()+payment.category.substring(1)}</Td> */}
           <Td textAlign={'end'} fontWeight={'bold'}>{payment.category === 'Fixo' ? 'R$' : '%'}{payment.value.toFixed(2)}</Td>
-          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.category === 'Fixo' ? payment.value.toFixed(2) : (payment.value/100) * (Number(receiptTotal) - Number(expensesTotal))}</Td>
-          <Td color={payment.status === 'N' ? 'red' : 'green'} fontWeight='bold'>{payment.status === 'N' ? 'Pendente' : 'Realizado'}</Td>
+          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.category === 'Fixo' ? payment.value.toFixed(2) : ((payment.value/100) * (Number(receiptTotal) - Number(expensesTotal))).toFixed(2)}</Td>
+          <Td color={verifyPayment(payment.name)} fontWeight='bold'>{paymentsMonth.filter((e)=> payment.name === e) ? 'Realizado' : 'Pendente'}</Td>
           <Td textAlign={'center'}>
 
           <IconButton
@@ -534,7 +565,8 @@ async function createPayments(object:any){
             variant='ghost'
             colorScheme='green'
             aria-label='Search database'
-            icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{onOpen(); /*setSelectedExtract(payment)*/}}/>
+            isDisabled={payment.category === 'Fixo' ? false : true}
+            icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{onOpenPayment(); setSelectedPayment(payment)}}/>
   
           <IconButton
             isRound={true}
@@ -638,7 +670,7 @@ async function createPayments(object:any){
         <CardBody>
           <Text>Valor</Text>
           <Flex>
-          {/* <Text fontSize={'28px'}>R$</Text> */}
+
           <NumberInput defaultValue={selectedExtract?.value} min={0.1} max={99999999}>
             <NumberInputField required {...register("valueUpdate")} onChange={(e:any)=> setValueUpdate(Number(e.target.value))} />
             <NumberInputStepper>
@@ -748,8 +780,8 @@ async function createPayments(object:any){
 
           <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
                   <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false)}} >Início</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); setMenuPayment(true)}} >Colaboradores</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); setMenuPayment(true)}} >Acertos</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(); setMenuPayment(true)}} >Colaboradores</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(); setMenuPayment(true)}} >Acertos</Link>
                   <Link>Estatísticas</Link>
           </DrawerBody>
 
@@ -760,6 +792,27 @@ async function createPayments(object:any){
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <Modal closeOnOverlayClick={false} isOpen={isOpenPayment} onClose={onClosePayment} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader display={'flex'} alignItems={'center'}>
+            <Text color='orange' mr={'4px'}>Atenção</Text>
+            <BsFillExclamationCircleFill color='orange'/>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Text>Deseja concluir o pagamento ?</Text>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{finalizePayment(Number(selectedPayment?.id)); onClosePayment()}}>
+              Concluir
+            </Button>
+            <Button onClick={onClosePayment}>Cancelar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
 
       </Flex>

@@ -22,3 +22,8 @@ export const createPayment = async (payment:any) => {
     await api.post(`/financial-organizational/payment`, payment);
 
 }
+
+export const makePayment = async (id:number) => {
+    await api.put(`/financial-organizational/payment/${id}`);
+
+}

@@ -69,22 +69,17 @@ function Home() {
   const { isOpen: isOpenUpdate, onOpen: onOpenUpdate, onClose: onCloseUpdate } = useDisclosure();
   const { isOpen: isOpenMenu, onOpen: onOpenMenu, onClose: onCloseMenu } = useDisclosure();
   const { isOpen: isOpenPayment, onOpen: onOpenPayment, onClose: onClosePayment } = useDisclosure();
-  const [credits, setCredits] = useState(false);
 
+  const [credits, setCredits] = useState(false);
   const [debts, setDebts] = useState(false);
-  const [selectedExtract, setSelectedExtract] = useState<Extract>();
+  const [selectedExtract, setSelectedExtract] = useState<Extract | any>();
+ 
   const [dateInitial, setDateInitial] = useState<String>();
   const [dateFinal, setDateFinal] = useState<String>();
   const [activeFilter, setActiveFilter] = useState<String>('gray.200'); 
   const [proofTransaction, setProofTransaction] = useState<File | null>();
-  const [dateUpdate, setDateUpdate] = useState<Date>();
 
-  // const [updateExtract, setUpdateExtract] = useState<Extract>();
-  const [categoryUpdate, setCategoryUpdate] = useState<string>('');
-  const [titleUpdate, setTitleUpdate] = useState<string>('');
-  const [valueUpdate, setValueUpdate] = useState<number>();
   const [paymentsMonth, setPaymentsMonth] = useState([]);
-
   const [payments, setPayments] = useState<Payment[]>();
   const [menuPayment, setMenuPayment] = useState<boolean>(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment>();
@@ -241,18 +236,9 @@ async function deleteExtract(){
   }
 
   async function update(){
-    const obj = new Object({
-      id:selectedExtract?.id,
-      dateUpdate: dateUpdate ? dateFormated(dateUpdate) : dateFormated(selectedExtract?.date),
-      categoryUpdate,
-      titleUpdate,
-      valueUpdate,
-      proofTransactionUpdate: proofTransaction ? proofTransaction : selectedExtract?.proofTransaction
-      //Atualizar ternário por ??
-    });
     setActiveFilter('gray.200');
     setLoading(true);
-    updateExtract(obj)
+    updateExtract(selectedExtract)
     .then(() => {
       setProofTransaction(null);
       searchInitialExtract();
@@ -511,7 +497,7 @@ async function finalizePayment(id:number){
       return(
         <>
        <Tr key={extract.id}>
-        <Td>{new Date(extract.date).toLocaleDateString('pt-BR')}</Td>
+        <Td>{new Date(extract.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</Td>
         <Td>{extract.category}</Td>
         <Td>{extract.title}</Td>
         <Td textAlign={'end'} fontWeight={'bold'} color={extract.category === 'Débito' ? 'red': 'green'}>R${extract.value.toFixed(2)}</Td>
@@ -636,20 +622,18 @@ async function finalizePayment(id:number){
                 size="md"
                 type="date"
                 required
-                {...register("dateUpdate")}
                 defaultValue={dateFormated(selectedExtract?.date)}
-                onChange={(e:any)=>setDateUpdate(new Date(e.target.value))}
-                />
+                onChange={(e:any)=> setSelectedExtract({...selectedExtract, date: e.target.value})}/>
               </CardBody>
 
               <CardBody>
               <Text>Categoria</Text>
               {selectedExtract?.category === 'Crédito' ?
-              <Select {...register("categoryUpdate")} onChange={(e:any)=> setCategoryUpdate(e.target.value)}>
+              <Select onChange={(e:any)=> setSelectedExtract({...selectedExtract, category: e.target.value})}>
                 <option value='Crédito'>Creditar</option>
                 <option value='Débito'>Debitar</option>
               </Select>:
-              <Select {...register("categoryUpdate")} onChange={(e:any)=> setCategoryUpdate(e.target.value)}>
+              <Select onChange={(e:any)=> setSelectedExtract({...selectedExtract, category: e.target.value})}>
               <option value='Débito'>Debitar</option>
               <option value='Crédito'>Creditar</option>
             </Select>}
@@ -659,10 +643,8 @@ async function finalizePayment(id:number){
         <CardBody>
           <Text>Titulo</Text>
           <Input
-           required {...register("titleUpdate")}
            defaultValue={selectedExtract?.title}
-           onChange={(e:any)=>setTitleUpdate(e.target.value)} 
-          //  onChange={(e)=> setExtractUpdate({...setExtractUpdate, title:e.target.value})}
+           onChange={(e)=> {setSelectedExtract({...selectedExtract, title:e.target.value}); console.log(selectedExtract)}}
            />
         </CardBody>
 
@@ -672,7 +654,7 @@ async function finalizePayment(id:number){
           <Flex>
 
           <NumberInput defaultValue={selectedExtract?.value} min={0.1} max={99999999}>
-            <NumberInputField required {...register("valueUpdate")} onChange={(e:any)=> setValueUpdate(Number(e.target.value))} />
+            <NumberInputField onChange={(e)=> setSelectedExtract({...selectedExtract, value:e.target.value})} />
             <NumberInputStepper>
             <NumberIncrementStepper />
             <NumberDecrementStepper />
@@ -694,7 +676,6 @@ async function finalizePayment(id:number){
           type='file'
           placeholder='clique para adicionar o comprovante' 
           display={'none'}
-          {...register("proofTransactionUpdate")}
           onChange={(e:any)=>setProofTransaction(e.target.files?.item(0))}/>
           </FormLabel>
           {proofTransaction ?
@@ -712,7 +693,7 @@ async function finalizePayment(id:number){
             <Button type='submit' justifyContent={'space-between'} isLoading={loading} bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={update}>
               Atualizar
             </Button>
-            <Button onClick={()=>{onCloseUpdate()}}>Cancelar</Button>
+            <Button onClick={()=>{onCloseUpdate() }}>Cancelar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

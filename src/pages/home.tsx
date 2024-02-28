@@ -279,6 +279,9 @@ async function finalizePayment(id:number){
   await makePayment(id)
   .then(() => {
     searchPaymentsInitial();
+    searchPaymentsMonth(Number(month));
+    searchExpenses(Number(month));
+    searchReceipt(Number(month));
     successMessage(`Sucesso`, `Pagemento realizado!`, 3000);
 }).catch((e:Error)=>errorMessage(`Erro`, `${e.message}`, 6000))
 .finally(()=> setLoading(false));
@@ -293,6 +296,7 @@ async function finalizePayment(id:number){
   //Fazer paginação
   //Adicionar gráficos
   //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
+  //Encontrar uma forma de trazer a receita sem os descontos de colaboradores e com os colaboradores
 
   return (
     <Box>
@@ -559,7 +563,7 @@ async function finalizePayment(id:number){
             colorScheme='green'
             aria-label='Search database'
             isDisabled={payment.category === 'Fixo' ? false : true}
-            icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{onOpenPayment(); setSelectedPayment(payment)}}/>
+            icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{onOpenPayment();setSelectedPayment(payment)}}/>
   
           <IconButton
             isRound={true}
@@ -793,7 +797,7 @@ async function finalizePayment(id:number){
           </ModalBody>
 
           <ModalFooter>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{finalizePayment(Number(selectedPayment?.id)); onClosePayment()}}>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{finalizePayment(Number(selectedPayment?.id));onClosePayment()}}>
               Concluir
             </Button>
             <Button onClick={onClosePayment}>Cancelar</Button>

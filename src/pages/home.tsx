@@ -516,7 +516,7 @@ async function finalizePayment(id:number){
           variant='ghost'
           colorScheme='facebook'
           aria-label='Search database'
-          icon={<FaFileDownload  size={'60%'} />}/>
+          icon={<FaFileDownload  size={'60%'}/>} onClick={()=> !extract.proofTransaction ? infoMessage('Atenção', 'A transação requisitada ainda não possui comprovante. Você pode adicionar um comprovante editando a mesma.', 7000):''} />
           </Link>
 
         <IconButton

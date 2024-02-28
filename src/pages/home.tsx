@@ -40,7 +40,7 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   DrawerFooter} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight, AiTwotoneEdit } from "react-icons/ai";
-import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn  } from "react-icons/md";
+import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn, MdHelp } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
 import { FaFileDownload, FaRegEdit } from "react-icons/fa";
@@ -758,21 +758,21 @@ async function finalizePayment(id:number){
         isOpen={isOpenMenu}
         placement='left'
         onClose={onCloseMenu}
-        // finalFocusRef={btnRef}
       >
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerCloseButton />
-          <DrawerHeader>Menu</DrawerHeader>
+          <DrawerCloseButton color={'white'}/>
+          <DrawerHeader bg={'#4B0082'} color={'white'}>Menu</DrawerHeader>
 
           <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
-                  <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false)}} >Início</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} >Colaboradores</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} >Acertos</Link>
-                  <Link>Estatísticas</Link>
+                  <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false)}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Início</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Colaboradores</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Acertos</Link>
+                  <Link _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Estatísticas</Link>
           </DrawerBody>
 
-          <DrawerFooter>
+          <DrawerFooter display={'flex'} justifyContent={'space-between'}>
+            <MdHelp size={22} />
             <LinkRouter to='/'>
               <ImExit color='red' size={22}/>
             </LinkRouter>

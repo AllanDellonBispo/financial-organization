@@ -52,6 +52,7 @@ import { Extract, createExtract, deleteRecord, downloadFiles, expenses, payments
 import { useForm } from 'react-hook-form';
 import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter } from "react-router-dom";
+import Chart from "react-apexcharts";
 
 function Home() {
 
@@ -83,6 +84,30 @@ function Home() {
   const [payments, setPayments] = useState<Payment[]>();
   const [menuPayment, setMenuPayment] = useState<boolean>(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment>();
+
+  const [graphics, setGraphics] = useState<boolean>(false);
+
+  const state = {
+    options: {
+      chart: {
+        id: "basic-bar"
+      },
+      colors: [
+        '#4B0082',
+        '#E91E63',
+        '#9C27B0'],
+      xaxis: {
+        categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999]
+      }
+    },
+    series: [
+      {
+        name: "series-1",
+        data: [30, 40, 45, 50, 49, 60, 70, 91]
+      }
+    ]
+  };
+
 
   function returnMonth() {
     switch(Number(month)){
@@ -292,6 +317,7 @@ async function finalizePayment(id:number){
   //Adicionar gráficos
   //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
   //Encontrar uma forma de trazer a receita sem os descontos de colaboradores e com os colaboradores
+  //Fazer uma SQL que recebe duas datas e que retorne a soma das entradas do mês e o nome de cada mês correspondente
 
   return (
     <Box>
@@ -473,6 +499,40 @@ async function finalizePayment(id:number){
       </Card>
       </Flex>}
 
+    {graphics ?
+    <Box boxShadow='2xl' p='6' rounded='md' bg='white' display={!graphics ? 'none': 'block'}>
+
+    <Flex>
+
+    <Box boxShadow='2xl' p='6' rounded='md' bg='white' width="500px" height={"250px"} m={2}>
+    <Text>Renda mensal</Text>
+      <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R$5.000</Text>
+    </Box>
+ 
+    <Box boxShadow='2xl' p='6' rounded='md' bg='white' width="500px" height={"250px"} m={2}>
+    <Text>Renda mensal</Text>
+    <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R$5.000</Text>
+    </Box>
+    </Flex>
+
+    <Box>
+    <Text>Renda mensal</Text>
+    <div className="app">
+      <div className="row">
+        <div className="mixed-chart">
+          <Chart
+            options={state.options}
+            series={state.series}
+            type="area"
+            width="1000"
+            height={"300"}
+          />
+        </div>
+      </div>
+    </div>
+    </Box>
+  </Box>:
+
   <TableContainer w={'1000px'} >
   <Table variant='striped' w={'100%'}>
     <TableCaption fontWeight={'bold'}>Dados correspondente ao mês de {returnMonth()}</TableCaption>
@@ -485,7 +545,7 @@ async function finalizePayment(id:number){
         <Th>Título</Th>
         <Th isNumeric>Valor</Th>
         <Th textAlign={'center'}>opções</Th>
-      </Tr>:
+      </Tr>: 
       
       <Tr>
         <Th>Nome</Th>
@@ -537,8 +597,8 @@ async function finalizePayment(id:number){
       </Td>
      </Tr>
      </React.Fragment>
-      ))
-      : payments?.map((payment) => (
+      )): 
+      payments?.map((payment) => (
       <React.Fragment key={payment.id}>
          <Tr>
           <Td>{payment.name}</Td>
@@ -579,7 +639,7 @@ async function finalizePayment(id:number){
         ))}
     </Tbody>
   </Table>
-</TableContainer>
+</TableContainer>}
 
   <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay />
@@ -748,31 +808,6 @@ async function finalizePayment(id:number){
         </ModalContent>
       </Modal>
 
-      <Drawer
-        isOpen={isOpenMenu}
-        placement='left'
-        onClose={onCloseMenu}
-      >
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerCloseButton color={'white'}/>
-          <DrawerHeader bg={'#4B0082'} color={'white'}>Menu</DrawerHeader>
-
-          <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
-                  <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false)}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Início</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Colaboradores</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Acertos</Link>
-                  <Link _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082'}}>Estatísticas</Link>
-          </DrawerBody>
-
-          <DrawerFooter display={'flex'} justifyContent={'space-between'}>
-            <MdHelp size={22} />
-            <LinkRouter to='/'>
-              <ImExit color='red' size={22}/>
-            </LinkRouter>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
 
       <Modal closeOnOverlayClick={false} isOpen={isOpenPayment} onClose={onClosePayment} isCentered>
         <ModalOverlay />
@@ -795,6 +830,31 @@ async function finalizePayment(id:number){
         </ModalContent>
       </Modal>
 
+      <Drawer
+        isOpen={isOpenMenu}
+        placement='left'
+        onClose={onCloseMenu}
+      >
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton color={'white'}/>
+          <DrawerHeader bg={'#4B0082'} color={'white'}>Menu</DrawerHeader>
+
+          <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
+                  <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Início</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Colaboradores</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Acertos</Link>
+                  <Link _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}} onClick={()=> {setMenuPayment(false); setGraphics(true); onCloseMenu(); console.log(graphics)}}>Estatísticas</Link>
+          </DrawerBody>
+
+          <DrawerFooter display={'flex'} justifyContent={'space-between'}>
+            <MdHelp size={22} />
+            <LinkRouter to='/'>
+              <ImExit color='red' size={22}/>
+            </LinkRouter>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       </Flex>
     </Box>

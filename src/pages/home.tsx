@@ -158,15 +158,17 @@ function Home() {
     setExtractsInitial(await searchInitial());
   }
 
-  async function searchPaymentsMonth(){
+  async function searchPaymentsMonth(month: number){
     const payments = await paymentsOfMonth(Number(month));
+    // console.log('Foiii', payments)
     if(payments != null){
      setPaymentsMonth(payments);
-    //  console.log(paymentsMonth.filter((e:any)=>console.log(e.title)))
+    //  console.log(paymentsMonth);
     }
   }
 
   function verifyPayment(name : string): string | undefined{
+    console.log(paymentsMonth);
     if (name) {
       const payment = paymentsMonth.find((e: any) => e.title === name);
       return payment ? 'green' : 'red';
@@ -179,6 +181,9 @@ function Home() {
       setMonth(monthUpdated);
       searchExpenses(monthUpdated);
       searchReceipt(monthUpdated);
+      
+      searchPaymentsMonth(monthUpdated);//
+
       setExtractsInitial(await searchPreviousMonth(Number(month), Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro`, 6000);
@@ -191,6 +196,7 @@ function Home() {
       setMonth(monthUpdated);
       searchExpenses(monthUpdated);
       searchReceipt(monthUpdated);
+      searchPaymentsMonth(monthUpdated);
       setExtractsInitial(await searchNextMonth(Number(month), Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro.`, 6000);
@@ -286,6 +292,7 @@ async function finalizePayment(id:number){
 
   //Fazer paginação
   //Adicionar gráficos
+  //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
 
   return (
     <Box>
@@ -540,10 +547,10 @@ async function finalizePayment(id:number){
          <Tr key={payment.id}>
           <Td>{payment.name}</Td>
           <Td>{payment.description}</Td>
-          {/* <Td>{payment.category.charAt(0).toUpperCase()+payment.category.substring(1)}</Td> */}
           <Td textAlign={'end'} fontWeight={'bold'}>{payment.category === 'Fixo' ? 'R$' : '%'}{payment.value.toFixed(2)}</Td>
-          <Td textAlign={'end'} fontWeight={'bold'}>R${payment.category === 'Fixo' ? payment.value.toFixed(2) : ((payment.value/100) * (Number(receiptTotal) - Number(expensesTotal))).toFixed(2)}</Td>
-          <Td color={verifyPayment(payment.name)} fontWeight='bold'>{paymentsMonth.filter((e)=> payment.name === e) ? 'Realizado' : 'Pendente'}</Td>
+          <Td textAlign={'end'} fontWeight={'bold'}>R${ (Number(receiptTotal) - Number(expensesTotal)) <= 0 ? Number(0).toFixed(2) : payment.category === 'Fixo' ? payment.value.toFixed(2) : ((payment.value/100) * (Number(receiptTotal) - Number(expensesTotal))).toFixed(2)}</Td>
+          <Td color={(Number(receiptTotal) - Number(expensesTotal)) <= 0 ? 'green' : verifyPayment(payment.name)} fontWeight='bold'>{(Number(receiptTotal) - Number(expensesTotal)) <= 0 ? 'Sem pendências' :
+           paymentsMonth.find((e:any)=> payment.name === e.title) ? 'Realizado' : 'Pendente'}</Td>
           <Td textAlign={'center'}>
 
           <IconButton
@@ -644,7 +651,7 @@ async function finalizePayment(id:number){
           <Text>Titulo</Text>
           <Input
            defaultValue={selectedExtract?.title}
-           onChange={(e)=> {setSelectedExtract({...selectedExtract, title:e.target.value}); console.log(selectedExtract)}}
+           onChange={(e)=> {setSelectedExtract({...selectedExtract, title:e.target.value})}}
            />
         </CardBody>
 
@@ -664,7 +671,6 @@ async function finalizePayment(id:number){
         </CardBody>
         <CardBody >
           <Text>Comprovante</Text>
-          {/* <Input bg={'yellow'} type='file' placeholder='clique para adicionar o comprovante' {...register("proofTransactionUpload")} onChange={(e)=>setProofTransaction(e.target.files?.item(0))}/> */}
           <Flex justifyContent={'center'} alignItems={'center'}>
           <FormLabel htmlFor='proofTransactionUpdate' w={'100%'} h={10} border={'1px solid #f0f3f7'} borderRadius={4} bg={proofTransaction ? 'green' : 'white'} display={'flex'} justifyContent={'center'} >
           {!proofTransaction ?
@@ -761,8 +767,8 @@ async function finalizePayment(id:number){
 
           <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
                   <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false)}} >Início</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(); setMenuPayment(true)}} >Colaboradores</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(); setMenuPayment(true)}} >Acertos</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} >Colaboradores</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true)}} >Acertos</Link>
                   <Link>Estatísticas</Link>
           </DrawerBody>
 

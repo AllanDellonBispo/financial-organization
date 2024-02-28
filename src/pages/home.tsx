@@ -38,7 +38,7 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   DrawerContent,
   DrawerCloseButton,
   DrawerFooter} from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AiOutlineArrowLeft, AiOutlineArrowRight, AiTwotoneEdit } from "react-icons/ai";
 import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn, MdHelp } from "react-icons/md";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
@@ -160,15 +160,12 @@ function Home() {
 
   async function searchPaymentsMonth(month: number){
     const payments = await paymentsOfMonth(Number(month));
-    // console.log('Foiii', payments)
     if(payments != null){
      setPaymentsMonth(payments);
-    //  console.log(paymentsMonth);
     }
   }
 
   function verifyPayment(name : string): string | undefined{
-    console.log(paymentsMonth);
     if (name) {
       const payment = paymentsMonth.find((e: any) => e.title === name);
       return payment ? 'green' : 'red';
@@ -181,9 +178,7 @@ function Home() {
       setMonth(monthUpdated);
       searchExpenses(monthUpdated);
       searchReceipt(monthUpdated);
-      
-      searchPaymentsMonth(monthUpdated);//
-
+      searchPaymentsMonth(monthUpdated);
       setExtractsInitial(await searchPreviousMonth(Number(month), Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro`, 6000);
@@ -504,9 +499,9 @@ async function finalizePayment(id:number){
     </Thead>
 
     <Tbody>
-      {!menuPayment ? extractsInitial?.map((extract) => {
-      return(
-        <>
+      {!menuPayment ? extractsInitial?.map((extract) => (
+
+      <React.Fragment key={extract.id}>
        <Tr key={extract.id}>
         <Td>{new Date(extract.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</Td>
         <Td>{extract.category}</Td>
@@ -541,16 +536,13 @@ async function finalizePayment(id:number){
           icon={<MdDelete size={'60%'} />} onClick={()=>{onOpen(); setSelectedExtract(extract)}}/>
       </Td>
      </Tr>
-     </>
-      )
-      }):
-      
-      payments?.map((payment) => {
-        return(
-          <>
-         <Tr key={payment.id}>
+     </React.Fragment>
+      ))
+      : payments?.map((payment) => (
+      <React.Fragment key={payment.id}>
+         <Tr>
           <Td>{payment.name}</Td>
-          <Td>{payment.description}</Td>
+          <Td >{payment.description}</Td>
           <Td textAlign={'end'} fontWeight={'bold'}>{payment.category === 'Fixo' ? 'R$' : '%'}{payment.value.toFixed(2)}</Td>
           <Td textAlign={'end'} fontWeight={'bold'}>R${ (Number(receiptTotal) - Number(expensesTotal)) <= 0 ? Number(0).toFixed(2) : payment.category === 'Fixo' ? payment.value.toFixed(2) : ((payment.value/100) * (Number(receiptTotal) - Number(expensesTotal))).toFixed(2)}</Td>
           <Td color={(Number(receiptTotal) - Number(expensesTotal)) <= 0 ? 'green' : verifyPayment(payment.name)} fontWeight='bold'>{(Number(receiptTotal) - Number(expensesTotal)) <= 0 ? 'Sem pendências' :
@@ -583,10 +575,8 @@ async function finalizePayment(id:number){
             icon={<MdDelete size={'60%'} />} onClick={()=>{onOpen(); /*setSelectedExtract(payment)*/}}/>
         </Td>
        </Tr>
-       </>
-        )
-        })
-      }
+       </React.Fragment>
+        ))}
     </Tbody>
   </Table>
 </TableContainer>

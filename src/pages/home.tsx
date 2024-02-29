@@ -48,7 +48,7 @@ import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
 import { TiThMenu } from "react-icons/ti";
 import { ImExit } from "react-icons/im";
-import { Extract, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
+import { Extract, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { useForm } from 'react-hook-form';
 import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter } from "react-router-dom";
@@ -87,6 +87,7 @@ function Home() {
   const [selectedPayment, setSelectedPayment] = useState<Payment>();
 
   const [graphics, setGraphics] = useState<boolean>(false);
+  const [resultSearch, setResultSearch] = useState<any>([]);
 
   const state = {
     options: {
@@ -98,13 +99,13 @@ function Home() {
         '#E91E63',
         '#9C27B0'],
       xaxis: {
-        categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999]
+        categories: resultSearch.map((e:any) => e.mes_ano)
       }
     },
     series: [
       {
         name: "series-1",
-        data: [30, 40, 45, 50, 49, 60, 70, 91]
+        data: resultSearch.map((e:any) => e.total)
       }
     ]
   };
@@ -185,7 +186,6 @@ function Home() {
   }
 
   async function searchExpensesPartial(month: number){
-    // alert(month)
     setExpensesPartial(await expensesNoCollaborators(month));
   }
 
@@ -241,6 +241,10 @@ function Home() {
     }
     setDebts(false);
     setCredits(false);
+  }
+
+  async function searchPeriodOfGraphic(){
+    setResultSearch(await searchPeriodGraphic(dateInitial, dateFinal));
   }
 
 async function deleteExtract(){
@@ -323,7 +327,6 @@ async function finalizePayment(id:number){
   },[]);
 
   //Fazer paginação
-  //Adicionar gráficos
   //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
   //Encontrar uma forma de trazer a receita sem os descontos de colaboradores e com os colaboradores
   //Fazer uma SQL que recebe duas datas e que retorne a soma das entradas do mês e o nome de cada mês correspondente
@@ -400,34 +403,34 @@ async function finalizePayment(id:number){
     {graphics ? 
        <Card direction={'row'} w={'1000px'}>
           <CardBody>
-          <Flex>
-            <Text w={'100%'}>Data início</Text>
+          <Flex alignSelf={'center'}>
+            <Text w={'50%'}>Data início</Text>
             <Input
             placeholder="Selecione uma data"
             size="md"
             type="date"
             required
-            {...register("date")}
+            onChange={(e)=> setDateInitial(e.target.value)}
             />
           </Flex>
         </CardBody>
 
         <CardBody>
           <Flex>
-            <Text w={'100%'}>Data fim</Text>
+            <Text w={'50%'} alignSelf={'center'}>Data fim</Text>
             <Input
             placeholder="Selecione uma data"
             size="md"
             type="date"
             required
-            {...register("date")}
+            onChange={(e)=> setDateFinal(e.target.value)}
             />
           </Flex>
         </CardBody>
 
         <CardBody display={'flex'} alignItems={'center'}>
           <Flex direction={'column'}>
-            <Button>Buscar</Button>
+            <Button bg='#4B0082' color={'white'} onClick={searchPeriodOfGraphic}>Buscar registros</Button>
           </Flex>
         </CardBody>
        </Card>
@@ -566,13 +569,13 @@ async function finalizePayment(id:number){
     <Flex>
 
     <Box boxShadow='2xl' p='6' rounded='md' bg='white' width="500px" height={"250px"} m={2}>
-    <Text>Renda mensal</Text>
-      <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R$5.000</Text>
+    <Text>Receita total do período</Text>
+      <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R${resultSearch.reduce((acc:any, valor:any)=>acc+valor.total,0)}</Text>
     </Box>
  
     <Box boxShadow='2xl' p='6' rounded='md' bg='white' width="500px" height={"250px"} m={2}>
-    <Text>Renda mensal</Text>
-    <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R$5.000</Text>
+    <Text>Despesas total do período</Text>
+    <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R${resultSearch.reduce((acc:any, valor:any)=>acc+valor.total_debito,0)}</Text>
     </Box>
     </Flex>
 
@@ -665,7 +668,7 @@ async function finalizePayment(id:number){
           <Td>{payment.name}</Td>
           <Td >{payment.description}</Td>
           <Td textAlign={'end'} fontWeight={'bold'}>{payment.category === 'Fixo' ? 'R$' : '%'}{payment.value.toFixed(2)}</Td>
-          <Td textAlign={'end'} fontWeight={'bold'}>R${ (Number(receiptTotal) - Number(expensesTotal)) <= 0 ? Number(0).toFixed(2) : payment.category === 'Fixo' ? payment.value.toFixed(2) : ((payment.value/100) * (Number(receiptTotal) - Number(expensesTotal))).toFixed(2)}</Td>
+          <Td textAlign={'end'} fontWeight={'bold'}>R${ (Number(receiptTotal) - Number(expensesTotal)) <= 0 ? Number(0).toFixed(2) : payment.category === 'Fixo' ? payment.value.toFixed(2) : ((payment.value/100) * (Number(receiptTotal) - Number(expensesPartial))).toFixed(2)}</Td>
           <Td color={(Number(receiptTotal) - Number(expensesTotal)) <= 0 ? 'green' : verifyPayment(payment.name)} fontWeight='bold'>{(Number(receiptTotal) - Number(expensesTotal)) <= 0 ? 'Sem pendências' :
            paymentsMonth.find((e:any)=> payment.name === e.title) ? 'Realizado' : 'Pendente'}</Td>
           <Td textAlign={'center'}>
@@ -675,7 +678,7 @@ async function finalizePayment(id:number){
             variant='ghost'
             colorScheme='green'
             aria-label='Search database'
-            isDisabled={payment.category === 'Fixo' ? false : true}
+            // isDisabled={payment.category === 'Fixo' ? false : true}
             icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{onOpenPayment();setSelectedPayment(payment)}}/>
   
           <IconButton
@@ -903,7 +906,6 @@ async function finalizePayment(id:number){
 
           <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
                   <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Início</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Colaboradores</Link>
                   <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Acertos</Link>
                   <Link _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}} onClick={()=> {setMenuPayment(false); setGraphics(true); onCloseMenu(); console.log(graphics)}}>Estatísticas</Link>
           </DrawerBody>

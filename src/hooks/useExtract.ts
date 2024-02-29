@@ -81,6 +81,15 @@ export const searchPeriod = async (dateInitial: String | undefined, dateFinal: S
     return extracts;
 }
 
+export const searchPeriodGraphic = async (dateInitial: String | undefined, dateFinal: String | undefined) => {
+    let extracts;
+    await api.get(`/financial-organizational/extract/filter/graphic/${dateInitial}/${dateFinal}`)
+    .then(response => {
+        extracts = response.data;
+    });
+    return extracts;
+}
+
 export const searchPeriodReceipt = async (dateInitial: String | undefined, dateFinal: String | undefined) =>{
     let extracts;
     await api.get(`/financial-organizational/extract/filter/receipt/${dateInitial}/${dateFinal}`)

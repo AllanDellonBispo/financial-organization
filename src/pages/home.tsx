@@ -48,7 +48,7 @@ import { TfiClose } from "react-icons/tfi";
 import { VscSettings } from "react-icons/vsc";
 import { TiThMenu } from "react-icons/ti";
 import { ImExit } from "react-icons/im";
-import { Extract, createExtract, deleteRecord, downloadFiles, expenses, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
+import { Extract, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { useForm } from 'react-hook-form';
 import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter } from "react-router-dom";
@@ -57,6 +57,7 @@ import Chart from "react-apexcharts";
 function Home() {
 
   const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
+  const [expensesPartial, setExpensesPartial] = useState<Number>();
   const [expensesTotal, setExpensesTotal] = useState<Number>();
   const [receiptTotal, setReceiptTotal] = useState<Number>();
   const [month, setMonth] = useState<Number>(Number(new Date().getMonth())+1);
@@ -183,6 +184,11 @@ function Home() {
     setExtractsInitial(await searchInitial());
   }
 
+  async function searchExpensesPartial(month: number){
+    // alert(month)
+    setExpensesPartial(await expensesNoCollaborators(month));
+  }
+
   async function searchPaymentsMonth(month: number){
     const payments = await paymentsOfMonth(Number(month));
     if(payments != null){
@@ -204,6 +210,7 @@ function Home() {
       searchExpenses(monthUpdated);
       searchReceipt(monthUpdated);
       searchPaymentsMonth(monthUpdated);
+      searchExpensesPartial(monthUpdated);
       setExtractsInitial(await searchPreviousMonth(Number(month), Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro`, 6000);
@@ -217,6 +224,7 @@ function Home() {
       searchExpenses(monthUpdated);
       searchReceipt(monthUpdated);
       searchPaymentsMonth(monthUpdated);
+      searchExpensesPartial(monthUpdated);
       setExtractsInitial(await searchNextMonth(Number(month), Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro.`, 6000);
@@ -311,6 +319,7 @@ async function finalizePayment(id:number){
     searchInitialExtract();
     searchExpenses(Number(month));
     searchReceipt(Number(month));
+    searchExpensesPartial(Number(month));
   },[]);
 
   //Fazer paginação
@@ -351,16 +360,31 @@ async function finalizePayment(id:number){
             </Box>
           </Flex>
         </CardBody>
+
         <CardBody>
           <Text>Receita</Text>
           <Text  fontWeight={'bold'}>R$ {Number(receiptTotal)?.toFixed(2)}</Text>
         </CardBody>
+
         <CardBody>
           <Text>Despesa</Text>
           <Text  fontWeight={'bold'}>R$ {Number(expensesTotal)?.toFixed(2)}</Text>
         </CardBody>
+
         <CardBody>
-          <Text>Balanço</Text>
+          <Text>Balanço Parcial</Text>
+          <Flex>
+          <Text 
+          color={Number(receiptTotal) < Number(expensesPartial)  ? 'red' : 'green'}
+          fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesPartial))?.toFixed(2)}</Text>
+            <Stat maxW={'10%'} ml={'4px'}>
+              <StatArrow type={Number(receiptTotal) < Number(expensesPartial)  ? 'decrease' : 'increase'}/>
+            </Stat>
+          </Flex>
+        </CardBody>
+
+        <CardBody>
+          <Text>Balanço Total</Text>
           <Flex>
           <Text 
           color={Number(receiptTotal) < Number(expensesTotal)  ? 'red' : 'green'}
@@ -370,9 +394,46 @@ async function finalizePayment(id:number){
             </Stat>
           </Flex>
         </CardBody>
+        
       </Card>
       
-    {!menuPayment ?
+    {graphics ? 
+       <Card direction={'row'} w={'1000px'}>
+          <CardBody>
+          <Flex>
+            <Text w={'100%'}>Data início</Text>
+            <Input
+            placeholder="Selecione uma data"
+            size="md"
+            type="date"
+            required
+            {...register("date")}
+            />
+          </Flex>
+        </CardBody>
+
+        <CardBody>
+          <Flex>
+            <Text w={'100%'}>Data fim</Text>
+            <Input
+            placeholder="Selecione uma data"
+            size="md"
+            type="date"
+            required
+            {...register("date")}
+            />
+          </Flex>
+        </CardBody>
+
+        <CardBody display={'flex'} alignItems={'center'}>
+          <Flex direction={'column'}>
+            <Button>Buscar</Button>
+          </Flex>
+        </CardBody>
+       </Card>
+    
+    :
+    !menuPayment ?
     <Flex id='formCreate' as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
       <Card direction={'row'} >
         <CardBody>
@@ -441,7 +502,7 @@ async function finalizePayment(id:number){
         </CardBody>
       </Card>
       </Flex>:
-      
+
       <Flex as={'form'} onSubmit={handleSubmit(createPayments)} display={'flex'} w={'1000px'}>
       <Card direction={'row'} >
         <CardBody>

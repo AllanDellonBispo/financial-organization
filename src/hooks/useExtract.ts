@@ -36,6 +36,15 @@ export const expenses = async (month:Number) =>{
     return total;
 }
 
+export const expensesNoCollaborators = async (month:Number) =>{
+    let total;
+    await api.get(`/financial-organizational/extract/search/expenses/partial/${month}`)
+    .then(response => {
+        total = response.data;
+    });
+    return total;
+}
+
 export const receipt = async (month:Number) =>{
     let total;
     await api.get(`/financial-organizational/extract/search/receipt/${month}`)

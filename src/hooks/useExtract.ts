@@ -18,6 +18,15 @@ export const searchInitial = async () =>{
     return extracts;
 }
 
+export const changePage = async (month: number, page: number) =>{
+    let extracts;
+    await api.get(`/financial-organizational/extract/search/page/${month}/${page}`)
+    .then(response => {
+        extracts = response.data;
+    });
+    return extracts;
+}
+
 export const paymentsOfMonth = async (month: number) =>{
     let extracts;
     await api.get(`/financial-organizational/extract/payments/month/${month}`)

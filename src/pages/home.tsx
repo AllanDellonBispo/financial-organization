@@ -1,5 +1,5 @@
 //  
-import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
+import { Flex, Box, Card, CardBody, Text, Button, Input, Select,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
@@ -14,8 +14,6 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   TableCaption,
   TableContainer, 
   useToast,
-  StatArrow,
-  Stat,
   IconButton,
   Modal,
   ModalOverlay,
@@ -39,20 +37,20 @@ import { Flex, Box, Heading, Card, CardBody, Text, Button, Input, Select,
   DrawerCloseButton,
   DrawerFooter} from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
-import { AiOutlineArrowLeft, AiOutlineArrowRight, AiTwotoneEdit } from "react-icons/ai";
+import { AiTwotoneEdit } from "react-icons/ai";
 import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn, MdHelp } from "react-icons/md";
-import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
 import { FaFileDownload, FaRegEdit } from "react-icons/fa";
 import { TfiClose } from "react-icons/tfi";
-import { VscSettings } from "react-icons/vsc";
-import { TiThMenu } from "react-icons/ti";
 import { ImExit } from "react-icons/im";
-import { Extract, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
+import { Extract, changePage, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { useForm } from 'react-hook-form';
 import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter } from "react-router-dom";
 import Chart from "react-apexcharts";
+import { Header } from './components/HeaderPage';
+import { CardInfo } from './components/CardInfo/CardInfo';
+import { Pagination } from './components/Pagination';
 
 function Home() {
 
@@ -88,6 +86,19 @@ function Home() {
 
   const [graphics, setGraphics] = useState<boolean>(false);
   const [resultSearch, setResultSearch] = useState<any>([]);
+
+  const limit = 5;
+  const [page, setPage] = useState(1);
+
+  async function prevPageButton(){
+    setPage(page === 1 ? 1 : page - 1);
+    setExtractsInitial(await changePage(Number(month), (((page-1)*limit) - limit)));
+  }
+
+  async function nextPageButton(){
+      setExtractsInitial(await changePage(Number(month), page * limit));
+      setPage(page + 1);
+  }
 
   const state = {
     options: {
@@ -211,7 +222,7 @@ function Home() {
       searchReceipt(monthUpdated);
       searchPaymentsMonth(monthUpdated);
       searchExpensesPartial(monthUpdated);
-      setExtractsInitial(await searchPreviousMonth(Number(month), Number(new Date().getFullYear())));
+      setExtractsInitial(await searchPreviousMonth(monthUpdated, Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro`, 6000);
     }
@@ -225,7 +236,7 @@ function Home() {
       searchReceipt(monthUpdated);
       searchPaymentsMonth(monthUpdated);
       searchExpensesPartial(monthUpdated);
-      setExtractsInitial(await searchNextMonth(Number(month), Number(new Date().getFullYear())));
+      setExtractsInitial(await searchNextMonth(monthUpdated, Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro.`, 6000);
     }
@@ -325,7 +336,7 @@ async function finalizePayment(id:number){
     searchReceipt(Number(month));
     searchExpensesPartial(Number(month));
   },[]);
-
+console.log(activeFilter);
   //Fazer paginação
   //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
   //Encontrar uma forma de trazer a receita sem os descontos de colaboradores e com os colaboradores
@@ -333,72 +344,20 @@ async function finalizePayment(id:number){
 
   return (
     <Box>
-      <Heading>
-        <Flex bg={'#4B0082'} color={'white'} h={'120px'} fontSize={28} display={'flex'} justifyContent={'space-between'} align={'center'}>
-          <Box ml={'4%'}>
-            <TiThMenu size={'10%'} onClick={onOpenMenu}/>
-          </Box>
-          <Text>Sistema Financeiro</Text>
-          <Box>
-            <RiMoneyDollarCircleLine size={'20%'}/>
-          </Box>
-        </Flex>
-      </Heading>
+      <Header title='Sistema Financeiro' onClick={onOpenMenu}/>
+
       <Flex display={'flex'} alignItems={'center'} direction={'column'} mt={-10}>
-      
-      <Card display={'flex'} direction={'row'} w={'1000px'} mb={4} alignItems={'center'}>
-        <CardBody>
-          <Flex gap={4} alignItems={'center'}>
-            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={()=>{previousMonth();setActiveFilter('gray.200')}}>
-              <AiOutlineArrowLeft color={'white'}/>
-            </Button>
-            <Text alignSelf={'center'}>{returnMonth()}</Text>
-            <Button bg={'#4B0082'} _hover={{backgroundColor:'#7600ca'}} onClick={()=>{nextMonth(); setActiveFilter('gray.200')}}>
-              <AiOutlineArrowRight color={'white'}/>
-            </Button>
-            <Box>
-              <Button onClick={onOpenSearch} title='Filtrar' bg={String(activeFilter)} >
-                <VscSettings />
-              </Button>
-            </Box>
-          </Flex>
-        </CardBody>
 
-        <CardBody>
-          <Text>Receita</Text>
-          <Text  fontWeight={'bold'}>R$ {Number(receiptTotal)?.toFixed(2)}</Text>
-        </CardBody>
-
-        <CardBody>
-          <Text>Despesa</Text>
-          <Text  fontWeight={'bold'}>R$ {Number(expensesTotal)?.toFixed(2)}</Text>
-        </CardBody>
-
-        <CardBody>
-          <Text>Balanço Parcial</Text>
-          <Flex>
-          <Text 
-          color={Number(receiptTotal) < Number(expensesPartial)  ? 'red' : 'green'}
-          fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesPartial))?.toFixed(2)}</Text>
-            <Stat maxW={'10%'} ml={'4px'}>
-              <StatArrow type={Number(receiptTotal) < Number(expensesPartial)  ? 'decrease' : 'increase'}/>
-            </Stat>
-          </Flex>
-        </CardBody>
-
-        <CardBody>
-          <Text>Balanço Total</Text>
-          <Flex>
-          <Text 
-          color={Number(receiptTotal) < Number(expensesTotal)  ? 'red' : 'green'}
-          fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal))?.toFixed(2)}</Text>
-            <Stat maxW={'10%'} ml={'4px'}>
-              <StatArrow type={Number(receiptTotal) < Number(expensesTotal)  ? 'decrease' : 'increase'}/>
-            </Stat>
-          </Flex>
-        </CardBody>
-        
-      </Card>
+      <CardInfo
+        month={returnMonth()}
+        receiptTotal={Number(receiptTotal)}
+        expensesTotal={Number(expensesTotal)}
+        expensesPartial={Number(expensesPartial)}
+        activeFilter={()=>setActiveFilter('gray.300')}
+        bg={String(activeFilter)}
+        nextMonth={nextMonth}
+        previousMonth={previousMonth}
+        onOpenSearch={async () => await onOpenSearch()} />
       
     {graphics ? 
        <Card direction={'row'} w={'1000px'}>
@@ -703,6 +662,14 @@ async function finalizePayment(id:number){
         ))}
     </Tbody>
   </Table>
+
+    <Pagination
+    displayPrevious={page === 1 ? true : false}
+    displayNext={extractsInitial?.length !== undefined && extractsInitial?.length < limit ? true : false}
+    numberPage={page}
+    nextPageButton={nextPageButton}
+    prevPageButton={prevPageButton} />
+
 </TableContainer>}
 
   <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose} isCentered>

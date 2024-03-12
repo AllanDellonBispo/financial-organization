@@ -36,7 +36,7 @@ import { Flex, Box, Card, CardBody, Text, Button, Input, Select,
   DrawerContent,
   DrawerCloseButton,
   DrawerFooter} from '@chakra-ui/react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AiTwotoneEdit } from "react-icons/ai";
 import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn, MdHelp } from "react-icons/md";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
@@ -47,10 +47,13 @@ import { Extract, changePage, createExtract, deleteRecord, downloadFiles, expens
 import { useForm } from 'react-hook-form';
 import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter } from "react-router-dom";
-import Chart from "react-apexcharts";
 import { Header } from './components/HeaderPage';
 import { CardInfo } from './components/CardInfo/CardInfo';
 import { Pagination } from './components/Pagination';
+import { FieldSearch } from './components/Dashboard/FieldSearch';
+import { CardReceipt } from './components/Dashboard/CardReceipt';
+import { CardExpense } from './components/Dashboard/CardExpense';
+import { Graphic } from './components/Dashboard/Graphic';
 
 function Home() {
 
@@ -74,8 +77,8 @@ function Home() {
   const [debts, setDebts] = useState(false);
   const [selectedExtract, setSelectedExtract] = useState<Extract | any>();
  
-  const [dateInitial, setDateInitial] = useState<String>();
-  const [dateFinal, setDateFinal] = useState<String>();
+  const [dateInitial, setDateInitial] = useState<String>(new Date().toISOString().substring(0,10));
+  const [dateFinal, setDateFinal] = useState<String>(new Date().toISOString().substring(0,10));
   const [activeFilter, setActiveFilter] = useState<String>('gray.200'); 
   const [proofTransaction, setProofTransaction] = useState<File | null>();
 
@@ -93,11 +96,13 @@ function Home() {
   async function prevPageButton(){
     setPage(page === 1 ? 1 : page - 1);
     setExtractsInitial(await changePage(Number(month), (((page-1)*limit) - limit)));
+    setActiveFilter('gray.200');
   }
 
   async function nextPageButton(){
       setExtractsInitial(await changePage(Number(month), page * limit));
       setPage(page + 1);
+      setActiveFilter('gray.200');
   }
 
   const state = {
@@ -215,6 +220,7 @@ function Home() {
   }
   
   async function previousMonth(){
+    setPage(1);
     if(Number(month) > 1){
       const monthUpdated = Number(month) - 1;
       setMonth(monthUpdated);
@@ -229,6 +235,7 @@ function Home() {
   }
 
   async function nextMonth(){
+    setPage(1);
     if(Number(month) < 12){
       const monthUpdated = Number(month) + 1;
       setMonth(monthUpdated);
@@ -255,7 +262,11 @@ function Home() {
   }
 
   async function searchPeriodOfGraphic(){
-    setResultSearch(await searchPeriodGraphic(dateInitial, dateFinal));
+    try{
+      setResultSearch(await searchPeriodGraphic(dateInitial, dateFinal));
+    }catch{
+      infoMessage('Atenção', 'insira uma data válida para realizar a pesquisa.', 4000);
+    }
   }
 
 async function deleteExtract(){
@@ -336,11 +347,9 @@ async function finalizePayment(id:number){
     searchReceipt(Number(month));
     searchExpensesPartial(Number(month));
   },[]);
-console.log(activeFilter);
+
   //Fazer paginação
   //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
-  //Encontrar uma forma de trazer a receita sem os descontos de colaboradores e com os colaboradores
-  //Fazer uma SQL que recebe duas datas e que retorne a soma das entradas do mês e o nome de cada mês correspondente
 
   return (
     <Box>
@@ -360,41 +369,12 @@ console.log(activeFilter);
         onOpenSearch={async () => await onOpenSearch()} />
       
     {graphics ? 
-       <Card direction={'row'} w={'1000px'}>
-          <CardBody>
-          <Flex alignSelf={'center'}>
-            <Text w={'50%'}>Data início</Text>
-            <Input
-            placeholder="Selecione uma data"
-            size="md"
-            type="date"
-            required
-            onChange={(e)=> setDateInitial(e.target.value)}
-            />
-          </Flex>
-        </CardBody>
-
-        <CardBody>
-          <Flex>
-            <Text w={'50%'} alignSelf={'center'}>Data fim</Text>
-            <Input
-            placeholder="Selecione uma data"
-            size="md"
-            type="date"
-            required
-            onChange={(e)=> setDateFinal(e.target.value)}
-            />
-          </Flex>
-        </CardBody>
-
-        <CardBody display={'flex'} alignItems={'center'}>
-          <Flex direction={'column'}>
-            <Button bg='#4B0082' color={'white'} onClick={searchPeriodOfGraphic}>Buscar registros</Button>
-          </Flex>
-        </CardBody>
-       </Card>
-    
-    :
+        <FieldSearch
+         dateInitial={dateInitial}
+         dateFinal={dateFinal}
+         onChangeDateInitial={(e)=> setDateInitial(e.target.value)}
+         onChangeDateFinal={(e)=> setDateFinal(e.target.value)}
+         searchPeriodOfGraphic={searchPeriodOfGraphic}/>:
     !menuPayment ?
     <Flex id='formCreate' as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
       <Card direction={'row'} >
@@ -524,36 +504,11 @@ console.log(activeFilter);
 
     {graphics ?
     <Box boxShadow='2xl' p='6' rounded='md' bg='white' display={!graphics ? 'none': 'block'}>
-
     <Flex>
-
-    <Box boxShadow='2xl' p='6' rounded='md' bg='white' width="500px" height={"250px"} m={2}>
-    <Text>Receita total do período</Text>
-      <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R${resultSearch.reduce((acc:any, valor:any)=>acc+valor.total,0)}</Text>
-    </Box>
- 
-    <Box boxShadow='2xl' p='6' rounded='md' bg='white' width="500px" height={"250px"} m={2}>
-    <Text>Despesas total do período</Text>
-    <Text display={'flex'} justifyContent={'center'} alignItems={'center'} h={'100%'} fontSize={46} fontWeight={'bold'} color={'green'}>R${resultSearch.reduce((acc:any, valor:any)=>acc+valor.total_debito,0)}</Text>
-    </Box>
+      <CardReceipt resultSearch={resultSearch}/>
+      <CardExpense resultSearch={resultSearch}/>
     </Flex>
-
-    <Box>
-    <Text>Renda mensal</Text>
-    <div className="app">
-      <div className="row">
-        <div className="mixed-chart">
-          <Chart
-            options={state.options}
-            series={state.series}
-            type="area"
-            width="1000"
-            height={"300"}
-          />
-        </div>
-      </div>
-    </div>
-    </Box>
+    <Graphic state={state}/>
   </Box>:
 
   <TableContainer w={'1000px'} >

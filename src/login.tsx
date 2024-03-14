@@ -13,6 +13,7 @@ function Login(){
     const navigate = useNavigate();
     const toast = useToast();
     const { loginUser } = useLoggedUser();
+    const [disable, setDisable] = useState(false);
 
     const handleLoginError = () => {
         toast({
@@ -26,11 +27,14 @@ function Login(){
     }
 
     const checkLogin = async () => {
+        setDisable(true);
         try {
           await loginUser(email, password);
           navigate("/home");
         } catch (error) {
           handleLoginError();
+        }finally{
+        setDisable(false);
         }
       }
 
@@ -54,13 +58,13 @@ function Login(){
                     <FormControl mt={14} pl={4} pr={4}>
                         <Box mb={6}>
                             <FormLabel>Login</FormLabel>
-                            <Input type='text' onChange={(e)=> setEmail(e.target.value)}/>
+                            <Input type='text' onChange={(e)=> setEmail(e.target.value)} isDisabled={disable}/>
                         </Box>
 
                         <Box>
                             <FormLabel>Senha</FormLabel>
                             <InputGroup>
-                                <Input type={seePassword ? 'text' : 'password'} onChange={(e)=> setPassword(e.target.value)}/>
+                                <Input type={seePassword ? 'text' : 'password'} onChange={(e)=> setPassword(e.target.value)} isDisabled={disable}/>
                                 <InputRightElement onClick={()=>setSeePassword(!seePassword)}>
                                     {!seePassword ? <BsFillEyeSlashFill /> : <BsFillEyeFill />}
                                 </InputRightElement>

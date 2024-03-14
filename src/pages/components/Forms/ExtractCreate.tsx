@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, Flex, FormLabel, Input, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper, Select, Text } from "@chakra-ui/react";
-import { FieldValues, SubmitHandler, UseFormHandleSubmit, UseFormRegister, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { MdFileDownloadDone, MdOutlineClose } from "react-icons/md";
 
 type Props = {
@@ -86,7 +86,7 @@ export const ExtractCreate = (
           </Flex>
         </CardBody>
 
-        <CardBody alignSelf={'end'}>
+        <CardBody display={'fle'} alignItems={'center'} h={'100%'} pb={2}>
         <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
         </CardBody>
 

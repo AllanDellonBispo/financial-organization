@@ -45,7 +45,7 @@ import { TfiClose } from "react-icons/tfi";
 import { ImExit } from "react-icons/im";
 import { Extract, changePage, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { useForm } from 'react-hook-form';
-import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
+import { Payment, createPayment, deletePayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter, useNavigate } from "react-router-dom";
 import { Header } from './components/HeaderPage';
 import { CardInfo } from './components/CardInfo/CardInfo';
@@ -56,6 +56,7 @@ import { CardExpense } from './components/Dashboard/CardExpense';
 import { Graphic } from './components/Dashboard/Graphic';
 import { LoggedUserContext } from '../contexts/LoggedUser';
 import { ExtractCreate } from './components/Forms/ExtractCreate';
+import { PaymentCreate } from './components/Forms/PaymentCreate';
 
 function Home() {
 
@@ -76,6 +77,7 @@ function Home() {
   const { isOpen: isOpenUpdate, onOpen: onOpenUpdate, onClose: onCloseUpdate } = useDisclosure();
   const { isOpen: isOpenMenu, onOpen: onOpenMenu, onClose: onCloseMenu } = useDisclosure();
   const { isOpen: isOpenPayment, onOpen: onOpenPayment, onClose: onClosePayment } = useDisclosure();
+  const { isOpen: isOpenDeletePayment, onOpen: onOpenDeletePayment, onClose: onCloseDeletePayment } = useDisclosure();
 
   const [credits, setCredits] = useState(false);
   const [debts, setDebts] = useState(false);
@@ -345,6 +347,22 @@ async function finalizePayment(id:number){
 .finally(()=> setLoading(false));
 }
 
+async function excludePayment(){
+  setLoading(true);
+  try{
+    if(selectedPayment?.id){
+      await deletePayment(selectedPayment?.id);
+      searchPaymentsInitial();
+      successMessage('Sucesso', 'registro excluido', 4000);
+    }
+  }catch{
+    errorMessage('Erro', 'tente novamente mais tarde', 4000);
+  }finally{
+    onCloseDeletePayment();
+    setLoading(false);
+  }
+}
+
    useEffect( () => {
     if (!status) {
       navigate('/');
@@ -355,7 +373,6 @@ async function finalizePayment(id:number){
     searchExpensesPartial(Number(month));
   },[]);
 
-  //Fazer paginação
   //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
 
   return (
@@ -385,68 +402,8 @@ async function finalizePayment(id:number){
          searchPeriodOfGraphic={searchPeriodOfGraphic}/>:
     !menuPayment ?
 
-    <ExtractCreate
-      create={create}
-      loading={loading}
-      proofTransaction={proofTransaction}
-      setProofTransaction={setProofTransaction}/> :
-
-      <Flex as={'form'} onSubmit={handleSubmit(createPayments)} display={'flex'} w={'1000px'}>
-      <Card direction={'row'} >
-        <CardBody>
-          <Flex direction={'column'}>
-            <Text>Nome</Text>
-            <Input
-            placeholder="Fulano..."
-            size="md"
-            type="text"
-            required
-            {...register("name")}
-            />
-          </Flex>
-        </CardBody>
-
-        <CardBody>
-          <Flex direction={'column'}>
-            <Text>Descrição</Text>
-            <Input
-            placeholder="Limpeza..."
-            size="md"
-            type="text"
-            required
-            {...register("description")}
-            w={'100%'}
-            />
-          </Flex>
-        </CardBody>
-
-        <CardBody>
-          <Text>Categoria</Text>
-          <Select w={'150px'} {...register("category")}>
-          <option value='Fixo'>Fixo</option>
-          <option value='Porcentagem'>Porcentagem</option>
-          </Select>
-        </CardBody>
-
-        <CardBody>
-          <Text>Valor/salário</Text>
-          <Flex>
-          {/* <Text fontSize={'28px'}>R$</Text> */}
-          <NumberInput defaultValue={100} min={0.1} max={99999999} >
-            <NumberInputField required {...register("value")} />
-            <NumberInputStepper>
-            <NumberIncrementStepper />
-            <NumberDecrementStepper />
-            </NumberInputStepper>
-          </NumberInput>
-          </Flex>
-        </CardBody>
-
-        <CardBody alignSelf={'end'}>
-        <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
-        </CardBody>
-      </Card>
-      </Flex>}
+    <ExtractCreate create={create} loading={loading} proofTransaction={proofTransaction} setProofTransaction={setProofTransaction}/> :
+    <PaymentCreate createPayments={createPayments} loading={loading}/>}
 
     {graphics ?
     <Box boxShadow='2xl' p='6' rounded='md' bg='white' display={!graphics ? 'none': 'block'}>
@@ -474,7 +431,6 @@ async function finalizePayment(id:number){
       <Tr>
         <Th>Nome</Th>
         <Th>Descrição</Th>
-        {/* <Th>Categoria</Th> */}
         <Th isNumeric>Valor</Th>
         <Th isNumeric>Total</Th>
         <Th>Status</Th>
@@ -538,8 +494,9 @@ async function finalizePayment(id:number){
             variant='ghost'
             colorScheme='green'
             aria-label='Search database'
-            // isDisabled={payment.category === 'Fixo' ? false : true}
-            icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{onOpenPayment();setSelectedPayment(payment)}}/>
+            icon={<MdMonetizationOn  size={'60%'} />} onClick={()=>{
+                                                                    onOpenPayment();
+                                                                    setSelectedPayment(payment)}}/>
   
           <IconButton
             isRound={true}
@@ -547,8 +504,7 @@ async function finalizePayment(id:number){
             colorScheme='facebook'
             aria-label='Search database'
             icon={<AiTwotoneEdit size={'60%'} />} onClick={()=>{
-                                                                // setSelectedExtract(payment);
-                                                                // setProofTransaction(payment.proofTransaction);
+                                                                setSelectedExtract(payment);
                                                                 onOpenUpdate()}}
             />
             <IconButton
@@ -556,7 +512,7 @@ async function finalizePayment(id:number){
             variant='ghost'
             colorScheme='red'
             aria-label='Search database'
-            icon={<MdDelete size={'60%'} />} onClick={()=>{onOpen(); /*setSelectedExtract(payment)*/}}/>
+            icon={<MdDelete size={'60%'} />} onClick={()=>{onOpenDeletePayment(); setSelectedPayment(payment)}}/>
         </Td>
        </Tr>
        </React.Fragment>
@@ -586,10 +542,31 @@ async function finalizePayment(id:number){
           </ModalBody>
 
           <ModalFooter>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={deleteExtract}>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={deleteExtract} isLoading={loading}>
               Tenho certeza
             </Button>
             <Button onClick={onClose}>Cancelar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal closeOnOverlayClick={false} isOpen={isOpenDeletePayment} onClose={onCloseDeletePayment} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader display={'flex'} alignItems={'center'}>
+            <Text color='orange' mr={'4px'}>Atenção</Text>
+            <BsFillExclamationCircleFill color='orange'/>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <Text>Deseja excluir esse registro ?</Text>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={excludePayment} isLoading={loading}>
+              Tenho certeza
+            </Button>
+            <Button onClick={onCloseDeletePayment}>Cancelar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -685,7 +662,7 @@ async function finalizePayment(id:number){
             <Button type='submit' justifyContent={'space-between'} isLoading={loading} bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={update}>
               Atualizar
             </Button>
-            <Button onClick={()=>{onCloseUpdate() }}>Cancelar</Button>
+            <Button onClick={()=>onCloseUpdate()}>Cancelar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -731,7 +708,7 @@ async function finalizePayment(id:number){
           </HStack>
             </Box>
             <Flex>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{setActiveFilter('red');onCloseSearch(); searchFilter()}}>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{setActiveFilter('red');onCloseSearch(); searchFilter()}} isLoading={loading}>
               Buscar
             </Button>
             <Button onClick={onCloseSearch}>Cancelar</Button>
@@ -754,7 +731,7 @@ async function finalizePayment(id:number){
           </ModalBody>
 
           <ModalFooter>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{finalizePayment(Number(selectedPayment?.id));onClosePayment()}}>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{finalizePayment(Number(selectedPayment?.id));onClosePayment()}} isLoading={loading}>
               Concluir
             </Button>
             <Button onClick={onClosePayment}>Cancelar</Button>
@@ -774,8 +751,8 @@ async function finalizePayment(id:number){
 
           <DrawerBody display={'flex'} flexDirection={'column'} gap={2}>
                   <Link textDecoration={'none'} onClick={()=> {searchInitialExtract(); setMenuPayment(false); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Início</Link>
-                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true); setGraphics(false); onCloseMenu()}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Acertos</Link>
-                  <Link _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}} onClick={()=> {setMenuPayment(false); setGraphics(true); onCloseMenu(); console.log(graphics)}}>Estatísticas</Link>
+                  <Link onClick={()=>{searchPaymentsInitial(); searchPaymentsMonth(Number(month)); setMenuPayment(true); setGraphics(false); onCloseMenu(); setActiveFilter('gray.200')}} _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}}>Acertos</Link>
+                  <Link _hover={{'fontSize':20, 'fontWeight':500, 'color':'#4B0082', 'transition':'100ms linear'}} onClick={()=> {setMenuPayment(false); setGraphics(true); onCloseMenu(); setActiveFilter('gray.200')}}>Estatísticas</Link>
           </DrawerBody>
 
           <DrawerFooter display={'flex'} justifyContent={'space-between'}>

@@ -27,3 +27,8 @@ export const makePayment = async (id:number) => {
     await api.put(`/financial-organizational/payment/${id}`);
 
 }
+
+export const deletePayment = async (id:number) => {
+    await api.delete(`/financial-organizational/payment/${id}`);
+
+}

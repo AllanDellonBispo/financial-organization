@@ -4,11 +4,6 @@ import { MdFileDownloadDone, MdOutlineClose } from "react-icons/md";
 
 type Props = {
     create:(object: any) => Promise<void>;
-    // registerDate: UseFormRegister<FieldValues>;
-    // registerCategory: UseFormRegister<FieldValues>;
-    // registerTitle: UseFormRegister<FieldValues>;
-    // registerValue: UseFormRegister<FieldValues>;
-    // registerProofTransaction: UseFormRegister<FieldValues>;
     proofTransaction: File | null | undefined;
     setProofTransaction: React.Dispatch<React.SetStateAction<File | null | undefined>>;
     loading: boolean;
@@ -16,11 +11,6 @@ type Props = {
 
 export const ExtractCreate = (
     {create,
-    // registerDate,
-    // registerCategory,
-    // registerTitle,
-    // registerValue,
-    // registerProofTransaction,
     proofTransaction,
     setProofTransaction,
     loading}:Props) =>{

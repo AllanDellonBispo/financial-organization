@@ -1,12 +1,11 @@
-import { Box, Button, Card, CardBody, Flex, Stat, StatArrow, Text } from "@chakra-ui/react";
-import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
-import { VscSettings } from "react-icons/vsc";
+import { Card } from "@chakra-ui/react";
 import { CardControl } from "./CardControl";
 import { CardValues } from "./CardValues";
 
 type Props = {
     month: string | undefined;
     activeFilter: ()=> void;
+    activeButton: boolean;
     bg: string;
     receiptTotal: number;
     expensesTotal: number;
@@ -16,10 +15,10 @@ type Props = {
     onOpenSearch: ()=> Promise<void | undefined>;
 }
 
-export const CardInfo = ({ month, activeFilter, bg, receiptTotal, expensesTotal, expensesPartial, previousMonth, nextMonth, onOpenSearch}: Props) => {
+export const CardInfo = ({ month, activeFilter, activeButton, bg, receiptTotal, expensesTotal, expensesPartial, previousMonth, nextMonth, onOpenSearch}: Props) => {
     return(
         <Card display={'flex'} direction={'row'} w={'1000px'} mb={4} alignItems={'center'}>
-          <CardControl month={month} nextMonth={async ()=>  await nextMonth()} previousMonth={async () => await previousMonth()} onOpenSearch={async ()=> await onOpenSearch()} activeFilter={()=>activeFilter()} bg={bg} />
+          <CardControl month={month} nextMonth={async ()=>  await nextMonth()} previousMonth={async () => await previousMonth()} onOpenSearch={async ()=> await onOpenSearch()} activeFilter={()=>activeFilter()} bg={bg} activeButton={activeButton} />
           <CardValues receiptTotal={receiptTotal} expensesTotal={expensesTotal} expensesPartial={expensesPartial} />
       </Card>
     );

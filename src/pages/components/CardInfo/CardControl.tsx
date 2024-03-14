@@ -8,10 +8,11 @@ type Props = {
     month: string | undefined;
     onOpenSearch: ()=> Promise<void | undefined>;
     activeFilter: ()=> void;
+    activeButton: boolean;
     bg: string;
 }
 
-export const CardControl = ({previousMonth, nextMonth, month, activeFilter, onOpenSearch, bg}: Props) => {
+export const CardControl = ({previousMonth, nextMonth, month, activeFilter, onOpenSearch, activeButton, bg}: Props) => {
     return(
         <CardBody>
         <Flex gap={4} alignItems={'center'}>
@@ -23,7 +24,7 @@ export const CardControl = ({previousMonth, nextMonth, month, activeFilter, onOp
             <AiOutlineArrowRight color={'white'}/>
           </Button>
           <Box>
-            <Button onClick={async ()=> await onOpenSearch()} title='Filtrar' bg={String(bg)} >
+            <Button onClick={async ()=> await onOpenSearch()} title='Filtrar' bg={String(bg)} isDisabled={activeButton}>
               <VscSettings />
             </Button>
           </Box>

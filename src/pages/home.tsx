@@ -371,6 +371,7 @@ async function finalizePayment(id:number){
         expensesPartial={Number(expensesPartial)}
         activeFilter={()=>setActiveFilter('gray.300')}
         bg={String(activeFilter)}
+        activeButton={menuPayment || graphics ? true : false}
         nextMonth={nextMonth}
         previousMonth={previousMonth}
         onOpenSearch={async () => await onOpenSearch()} />

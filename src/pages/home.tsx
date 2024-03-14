@@ -36,7 +36,7 @@ import { Flex, Box, Card, CardBody, Text, Button, Input, Select,
   DrawerContent,
   DrawerCloseButton,
   DrawerFooter} from '@chakra-ui/react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { AiTwotoneEdit } from "react-icons/ai";
 import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn, MdHelp } from "react-icons/md";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
@@ -46,7 +46,7 @@ import { ImExit } from "react-icons/im";
 import { Extract, changePage, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { useForm } from 'react-hook-form';
 import { Payment, createPayment, makePayment, searchPayments } from '../hooks/usePayment';
-import { Link as LinkRouter } from "react-router-dom";
+import { Link as LinkRouter, useNavigate } from "react-router-dom";
 import { Header } from './components/HeaderPage';
 import { CardInfo } from './components/CardInfo/CardInfo';
 import { Pagination } from './components/Pagination';
@@ -54,6 +54,8 @@ import { FieldSearch } from './components/Dashboard/FieldSearch';
 import { CardReceipt } from './components/Dashboard/CardReceipt';
 import { CardExpense } from './components/Dashboard/CardExpense';
 import { Graphic } from './components/Dashboard/Graphic';
+import { LoggedUserContext } from '../contexts/LoggedUser';
+import { ExtractCreate } from './components/Forms/ExtractCreate';
 
 function Home() {
 
@@ -67,6 +69,8 @@ function Home() {
 
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { status } = useContext(LoggedUserContext);
+  const navigate = useNavigate();
 
   const { isOpen: isOpenSearch, onOpen: onOpenSearch, onClose: onCloseSearch } = useDisclosure();
   const { isOpen: isOpenUpdate, onOpen: onOpenUpdate, onClose: onCloseUpdate } = useDisclosure();
@@ -125,7 +129,6 @@ function Home() {
       }
     ]
   };
-
 
   function returnMonth() {
     switch(Number(month)){
@@ -284,6 +287,7 @@ async function deleteExtract(){
       setActiveFilter('gray.200');
       setLoading(true);
       object.proofTransaction = proofTransaction;
+      alert(object)
       createExtract(object)
       .then(() => {
         setProofTransaction(null);
@@ -342,6 +346,9 @@ async function finalizePayment(id:number){
 }
 
    useEffect( () => {
+    if (!status) {
+      navigate('/');
+    }  
     searchInitialExtract();
     searchExpenses(Number(month));
     searchReceipt(Number(month));
@@ -376,74 +383,12 @@ async function finalizePayment(id:number){
          onChangeDateFinal={(e)=> setDateFinal(e.target.value)}
          searchPeriodOfGraphic={searchPeriodOfGraphic}/>:
     !menuPayment ?
-    <Flex id='formCreate' as={'form'} onSubmit={handleSubmit(create)} display={'flex'} w={'1000px'}>
-      <Card direction={'row'} >
-        <CardBody>
-          <Flex direction={'column'}>
-            <Text>Data</Text>
-            <Input
-            placeholder="Selecione uma data"
-            size="md"
-            type="date"
-            required
-            {...register("date")}
-            />
-          </Flex>
-        </CardBody>
-        <CardBody>
-          <Text>Categoria</Text>
-          <Select w={'150px'} {...register("category")}>
-          <option value='Crédito'>Creditar</option>
-          <option value='Débito'>Debitar</option>
-          </Select>
-        </CardBody>
-        <CardBody>
-          <Text>Titulo</Text>
-          <Input placeholder='Salário' required {...register("title")} />
-        </CardBody>
-        <CardBody>
-          <Text>Valor</Text>
-          <Flex>
-          {/* <Text fontSize={'28px'}>R$</Text> */}
-          <NumberInput defaultValue={100} min={0.1} max={99999999} >
-            <NumberInputField required {...register("value")} />
-            <NumberInputStepper>
-            <NumberIncrementStepper />
-            <NumberDecrementStepper />
-            </NumberInputStepper>
-          </NumberInput>
-          </Flex>
-        </CardBody>
-        <CardBody >
-          <Text>Comprovante</Text>
-          <Flex justifyContent={'center'} alignItems={'center'}>
-          <FormLabel htmlFor='proofTransactionUpload' w={'100%'} border={'1px solid #f0f3f7'} borderRadius={4} bg={proofTransaction ? 'green' : 'white'} display={'flex'} justifyContent={'center'} >
-          {!proofTransaction ?
-          <Text fontSize={14} color={'gray.400'} textAlign={'center'}>Clique para adicionar</Text> :
-       
-            <MdFileDownloadDone fontSize={40} color={proofTransaction ? 'white' : 'gray'} width={'100%'}/>
-          
-          }
-          <Input
-          id='proofTransactionUpload'
-          type='file'
-          placeholder='clique para adicionar o comprovante' 
-          display={'none'}
-          {...register("proofTransaction")}
-          onChange={(e:any)=>setProofTransaction(e.target.files?.item(0))}/>
-          </FormLabel>
-          {proofTransaction ?
-          <MdOutlineClose fontSize={20} onClick={()=>setProofTransaction(null)}/> :
-          ''
-        }
-          </Flex>
-          
-        </CardBody>
-        <CardBody alignSelf={'end'}>
-        <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
-        </CardBody>
-      </Card>
-      </Flex>:
+
+    <ExtractCreate
+      create={create}
+      loading={loading}
+      proofTransaction={proofTransaction}
+      setProofTransaction={setProofTransaction}/> :
 
       <Flex as={'form'} onSubmit={handleSubmit(createPayments)} display={'flex'} w={'1000px'}>
       <Card direction={'row'} >

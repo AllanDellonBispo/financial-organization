@@ -7,6 +7,7 @@ import { ChakraProvider} from '@chakra-ui/react';
 import { BrowserRouter, Route, Router, Routes } from 'react-router-dom';
 import App from './pages/home';
 import Home from './pages/home';
+import { LoggedUserProvider } from './contexts/LoggedUser';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -14,6 +15,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <ChakraProvider>
     <React.StrictMode>
+      <LoggedUserProvider>
       <BrowserRouter basename='/'>
         {/* <App /> */}
         {/* <Login/> */}
@@ -22,6 +24,7 @@ root.render(
           <Route path='/home' element={<Home/>} />
         </Routes>
       </BrowserRouter>
+      </LoggedUserProvider>
     </React.StrictMode>
   </ChakraProvider>
 );

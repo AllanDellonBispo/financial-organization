@@ -1,12 +1,38 @@
-import { Flex, Box, Image, Text, FormControl, FormLabel, Input, Button, InputGroup, InputRightElement } from "@chakra-ui/react";
+import { Flex, Box, Image, Text, FormControl, FormLabel, Input, Button, InputGroup, InputRightElement, useToast } from "@chakra-ui/react";
 import { useState } from "react";
 import { BsFillEyeSlashFill, BsFillEyeFill  } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {useLoggedUser } from "./contexts/LoggedUser";
 
 
 function Login(){
     
     const [seePassword, setSeePassword] = useState(false);
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const navigate = useNavigate();
+    const toast = useToast();
+    const { loginUser } = useLoggedUser();
+
+    const handleLoginError = () => {
+        toast({
+            title: 'Login ou senha incorretos',
+            description: '',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+            position: 'top-left',
+        });
+    }
+
+    const checkLogin = async () => {
+        try {
+          await loginUser(email, password);
+          navigate("/home");
+        } catch (error) {
+          handleLoginError();
+        }
+      }
 
     return(
         <Flex>
@@ -28,13 +54,13 @@ function Login(){
                     <FormControl mt={14} pl={4} pr={4}>
                         <Box mb={6}>
                             <FormLabel>Login</FormLabel>
-                            <Input type='text'/>
+                            <Input type='text' onChange={(e)=> setEmail(e.target.value)}/>
                         </Box>
 
                         <Box>
                             <FormLabel>Senha</FormLabel>
                             <InputGroup>
-                                <Input type={seePassword ? 'text' : 'password'} />
+                                <Input type={seePassword ? 'text' : 'password'} onChange={(e)=> setPassword(e.target.value)}/>
                                 <InputRightElement onClick={()=>setSeePassword(!seePassword)}>
                                     {!seePassword ? <BsFillEyeSlashFill /> : <BsFillEyeFill />}
                                 </InputRightElement>
@@ -42,9 +68,7 @@ function Login(){
                         </Box>
 
                         <Box mt={8}>
-                            <Link to='/home'>
-                                <Button colorScheme='purple' w={'100%'}>Entrar</Button>
-                            </Link>
+                                <Button colorScheme='purple' w={'100%'} onClick={checkLogin}>Entrar</Button>
                         </Box>
                     </FormControl>  
                 </Box>

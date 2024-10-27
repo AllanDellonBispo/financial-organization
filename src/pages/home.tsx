@@ -44,7 +44,6 @@ import { FaFileDownload, FaRegEdit } from "react-icons/fa";
 import { TfiClose } from "react-icons/tfi";
 import { ImExit } from "react-icons/im";
 import { Extract, changePage, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
-import { useForm } from 'react-hook-form';
 import { Payment, createPayment, deletePayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter, useNavigate } from "react-router-dom";
 import { Header } from './components/HeaderPage';
@@ -66,7 +65,6 @@ function Home() {
   const [receiptTotal, setReceiptTotal] = useState<Number>();
   const [month, setMonth] = useState<Number>(Number(new Date().getMonth())+1);
   const [loading, setLoading] = useState(false);
-  const {register, handleSubmit} = useForm();
 
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -289,7 +287,6 @@ async function deleteExtract(){
       setActiveFilter('gray.200');
       setLoading(true);
       object.proofTransaction = proofTransaction;
-      alert(object)
       createExtract(object)
       .then(() => {
         setProofTransaction(null);
@@ -371,7 +368,9 @@ async function excludePayment(){
     searchExpenses(Number(month));
     searchReceipt(Number(month));
     searchExpensesPartial(Number(month));
-  },[]);
+  },[status, month, navigate]);
+
+  // Retirar month e navigate
 
   //É necessário realizar uma alteração para ao mudar o nome de um extract verificar se ele é um payment e mudar o nome também ou vice-versa
 

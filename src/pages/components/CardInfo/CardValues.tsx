@@ -11,12 +11,12 @@ export const CardValues = ({receiptTotal, expensesTotal, expensesPartial}: Props
         <>
             <CardBody>
                 <Text>Receita</Text>
-                <Text  fontWeight={'bold'}>R$ {Number(receiptTotal)?.toFixed(2)}</Text>
+                <Text  fontWeight={'bold'}>R$ {Number(receiptTotal)?.toFixed(2) && 0}</Text>
             </CardBody>
 
             <CardBody>
                 <Text>Despesa</Text>
-                <Text  fontWeight={'bold'}>R$ {Number(expensesTotal)?.toFixed(2)}</Text>
+                <Text  fontWeight={'bold'}>R$ {Number(expensesTotal)?.toFixed(2) && 0}</Text>
             </CardBody>
 
             <CardBody>
@@ -24,7 +24,7 @@ export const CardValues = ({receiptTotal, expensesTotal, expensesPartial}: Props
             <Flex>
                 <Text 
                 color={Number(receiptTotal) < Number(expensesPartial)  ? 'red' : 'green'}
-                fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesPartial))?.toFixed(2)}</Text>
+                fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesPartial))?.toFixed(2) && 0}</Text>
                 <Stat maxW={'10%'} ml={'4px'}>
                     <StatArrow type={Number(receiptTotal) < Number(expensesPartial)  ? 'decrease' : 'increase'}/>
                 </Stat>
@@ -36,7 +36,7 @@ export const CardValues = ({receiptTotal, expensesTotal, expensesPartial}: Props
             <Flex>
                 <Text 
                 color={Number(receiptTotal) < Number(expensesTotal)  ? 'red' : 'green'}
-                fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal))?.toFixed(2)}</Text>
+                fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal))?.toFixed(2) && 0}</Text>
                 <Stat maxW={'10%'} ml={'4px'}>
                     <StatArrow type={Number(receiptTotal) < Number(expensesTotal)  ? 'decrease' : 'increase'}/>
                 </Stat>

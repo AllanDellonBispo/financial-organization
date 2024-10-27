@@ -86,7 +86,7 @@ export const ExtractCreate = (
           </Flex>
         </CardBody>
 
-        <CardBody display={'fle'} alignItems={'center'} h={'100%'} pb={2}>
+        <CardBody display={'flex'} alignItems={'center'} h={'100%'} pb={2}>
         <Button bg={'#4B0082'} type='submit' color={'white'} isLoading={loading} _hover={{backgroundColor:'#7600ca'}}>Adicionar</Button>
         </CardBody>
 

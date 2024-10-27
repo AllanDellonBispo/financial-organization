@@ -4,10 +4,11 @@ import './index.css';
 import Login from './login';
 import reportWebVitals from './reportWebVitals';
 import { ChakraProvider} from '@chakra-ui/react';
-import { BrowserRouter, Route, Router, Routes } from 'react-router-dom';
-import App from './pages/home';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+// import App from './pages/home';
 import Home from './pages/home';
 import { LoggedUserProvider } from './contexts/LoggedUser';
+import ProtectedRoute from './routes/ProtectedRoute';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -21,7 +22,10 @@ root.render(
         {/* <Login/> */}
         <Routes>
           <Route path='/' element={<Login/>} />
-          <Route path='/home' element={<Home/>} />
+          <Route path='/home' element={
+            <ProtectedRoute>
+              <Home/>
+            </ProtectedRoute> } />
         </Routes>
       </BrowserRouter>
       </LoggedUserProvider>

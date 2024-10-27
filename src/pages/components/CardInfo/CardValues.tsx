@@ -37,6 +37,7 @@ export const CardValues = ({receiptTotal, expensesTotal, expensesPartial}: Props
                 <Text 
                 color={Number(receiptTotal) < Number(expensesTotal)  ? 'red' : 'green'}
                 fontWeight={'bold'}>R${(Number(receiptTotal) - Number(expensesTotal))?.toFixed(2) && 0}</Text>
+                
                 <Stat maxW={'10%'} ml={'4px'}>
                     <StatArrow type={Number(receiptTotal) < Number(expensesTotal)  ? 'decrease' : 'increase'}/>
                 </Stat>

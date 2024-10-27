@@ -38,6 +38,13 @@ function Login(){
         }
       }
 
+      const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            checkLogin();
+        }
+    };
+
+
     return(
         <Flex>
             <Box backgroundColor={'blue'} h={'100vh'} w={'100%'}>
@@ -58,13 +65,13 @@ function Login(){
                     <FormControl mt={14} pl={4} pr={4}>
                         <Box mb={6}>
                             <FormLabel>Login</FormLabel>
-                            <Input type='text' onChange={(e)=> setEmail(e.target.value)} isDisabled={disable}/>
+                            <Input onKeyDown={handleKeyDown} type='text' onChange={(e)=> setEmail(e.target.value)} isDisabled={disable}/>
                         </Box>
 
                         <Box>
                             <FormLabel>Senha</FormLabel>
                             <InputGroup>
-                                <Input type={seePassword ? 'text' : 'password'} onChange={(e)=> setPassword(e.target.value)} isDisabled={disable}/>
+                                <Input onKeyDown={handleKeyDown} type={seePassword ? 'text' : 'password'} onChange={(e)=> setPassword(e.target.value)} isDisabled={disable}/>
                                 <InputRightElement onClick={()=>setSeePassword(!seePassword)}>
                                     {!seePassword ? <BsFillEyeSlashFill /> : <BsFillEyeFill />}
                                 </InputRightElement>
@@ -72,7 +79,7 @@ function Login(){
                         </Box>
 
                         <Box mt={8}>
-                                <Button colorScheme='purple' w={'100%'} onClick={checkLogin}>Entrar</Button>
+                                <Button id="submitButton" colorScheme='purple' w={'100%'} onClick={checkLogin}>Entrar</Button>
                         </Box>
                     </FormControl>  
                 </Box>

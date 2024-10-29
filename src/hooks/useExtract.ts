@@ -90,6 +90,15 @@ export const searchPeriod = async (dateInitial: String | undefined, dateFinal: S
     return extracts;
 }
 
+export const reportSearchPeriodCSV = (dateInitial: String | undefined, dateFinal: String | undefined) =>{
+    return `http://localhost:4000/financial-organizational/extract/report/CSV/${dateInitial}/${dateFinal}`;
+}
+
+export const reportSearchPeriodPDF = (dateInitial: String | undefined, dateFinal: String | undefined) =>{
+    return `http://localhost:4000/financial-organizational/extract/report/PDF/${dateInitial}/${dateFinal}`;
+}
+
+
 export const searchPeriodGraphic = async (dateInitial: String | undefined, dateFinal: String | undefined) => {
     let extracts;
     await api.get(`/financial-organizational/extract/filter/graphic/${dateInitial}/${dateFinal}`)

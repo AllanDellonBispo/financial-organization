@@ -40,10 +40,10 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AiTwotoneEdit } from "react-icons/ai";
 import { MdDelete, MdFileDownloadDone, MdOutlineClose, MdMonetizationOn, MdHelp } from "react-icons/md";
 import { BsFillExclamationCircleFill, BsClipboardDataFill  } from "react-icons/bs";
-import { FaFileDownload, FaRegEdit } from "react-icons/fa";
+import { FaFileDownload, FaRegEdit, FaFileCsv, FaFilePdf} from "react-icons/fa";
 import { TfiClose } from "react-icons/tfi";
 import { ImExit } from "react-icons/im";
-import { Extract, changePage, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
+import { Extract, changePage, createExtract, deleteRecord, downloadFiles, expenses, expensesNoCollaborators, paymentsOfMonth, receipt, reportSearchPeriodCSV, reportSearchPeriodPDF, searchInitial, searchNextMonth, searchPeriod, searchPeriodExpenses, searchPeriodGraphic, searchPeriodReceipt, searchPreviousMonth, updateExtract } from '../hooks/useExtract';
 import { Payment, createPayment, deletePayment, makePayment, searchPayments } from '../hooks/usePayment';
 import { Link as LinkRouter, useNavigate } from "react-router-dom";
 import { Header } from './components/HeaderPage';
@@ -263,6 +263,18 @@ function Home() {
     setDebts(false);
     setCredits(false);
   }
+
+  // async function searchFilterReportCSV(){
+  //   await ReportSearchPeriodCSV(dateInitial, dateFinal);
+  //   setDebts(false);
+  //   setCredits(false);
+  // }
+
+  // async function searchFilterReportPDF(){
+  //   await ReportSearchPeriodPDF(dateInitial, dateFinal);
+  //   setDebts(false);
+  //   setCredits(false);
+  // }
 
   async function searchPeriodOfGraphic(){
     try{
@@ -692,9 +704,22 @@ async function excludePayment(){
               onChange={(e:any)=> setDateFinal(e.target.value)}
             />
           </ModalBody>
-          <ModalBody display={'flex'} justifyContent={'space-around'} pb={6}>
-            <Checkbox isChecked={credits} onChange={()=>{setDebts(false); setCredits(true)}}>Apenas créditos</Checkbox>
-            <Checkbox isChecked={debts} onChange={()=>{setCredits(false); setDebts(true)}}>Apenas débitos</Checkbox>
+          <ModalBody pb={6}>
+            <Box display={'flex'} justifyContent={'space-around'}>
+              <Checkbox isChecked={credits} onChange={()=>{setDebts(false); setCredits(true)}}>Apenas créditos</Checkbox>
+              <Checkbox isChecked={debts} onChange={()=>{setCredits(false); setDebts(true)}}>Apenas débitos</Checkbox>
+            </Box>
+            <Box display={'flex'} justifyContent={'space-around'} mt={6}>
+              {/* <Link href={`http://localhost:4000/financial-organizational/extract/report/CSV/2024-01-22/2024-01-29`}>
+                <FaFileCsv fontSize={30} cursor={'pointer'}/>
+              </Link> */}
+              <Link href={`${reportSearchPeriodCSV(dateInitial, dateFinal)}`}>
+                <FaFileCsv fontSize={30} cursor={'pointer'}/>
+              </Link>
+              <Link href={`${reportSearchPeriodPDF(dateInitial, dateFinal)}`} target='_blank'>
+                <FaFilePdf fontSize={30} cursor={'pointer'}/>
+              </Link>
+            </Box>
           </ModalBody>
 
           <ModalFooter display={'flex'} justifyContent={'space-between'}>

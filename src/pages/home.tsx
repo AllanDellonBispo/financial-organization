@@ -62,7 +62,7 @@ function Home() {
   const [extractsInitial, setExtractsInitial] = useState<Extract[]>();
   const [expensesPartial, setExpensesPartial] = useState<Number>();
   const [expensesTotal, setExpensesTotal] = useState<Number>();
-  const [receiptTotal, setReceiptTotal] = useState<Number>();
+  const [receiptTotal, setReceiptTotal] = useState<number>();
   const [month, setMonth] = useState<Number>(Number(new Date().getMonth())+1);
   const [loading, setLoading] = useState(false);
 
@@ -193,11 +193,13 @@ function Home() {
 }
 
   async function searchExpenses(month:Number){
-    setExpensesTotal(await expenses(Number(month)));
+    const valor = await expenses(month);
+    setExpensesTotal(Number(valor));
   }
   
   async function searchReceipt(month:Number){
-    setReceiptTotal(await receipt(Number(month)));
+    const valor = await receipt(month);
+    setReceiptTotal(Number(valor));
   }
   
   async function searchInitialExtract(){
@@ -246,7 +248,6 @@ function Home() {
       searchReceipt(monthUpdated);
       searchPaymentsMonth(monthUpdated);
       searchExpensesPartial(monthUpdated);
-      setExtractsInitial(await searchNextMonth(monthUpdated, Number(new Date().getFullYear())));
     }else{
       infoMessage(`Atenção`, `Para visualizar uma transação fora do ano atual use o recurso de filtro.`, 6000);
     }
@@ -264,19 +265,7 @@ function Home() {
     setCredits(false);
   }
 
-  // async function searchFilterReportCSV(){
-  //   await ReportSearchPeriodCSV(dateInitial, dateFinal);
-  //   setDebts(false);
-  //   setCredits(false);
-  // }
-
-  // async function searchFilterReportPDF(){
-  //   await ReportSearchPeriodPDF(dateInitial, dateFinal);
-  //   setDebts(false);
-  //   setCredits(false);
-  // }
-
-  async function searchPeriodOfGraphic(){
+  async function searchPeriodOfGraphic(){ 
     try{
       setResultSearch(await searchPeriodGraphic(dateInitial, dateFinal));
     }catch{
@@ -296,8 +285,9 @@ async function deleteExtract(){
 }
 
   async function create(object:any){
-      setActiveFilter('gray.200');
-      setLoading(true);
+      // setActiveFilter('gray.200');
+      // setLoading(true);
+      // alert('teste 1')
       object.proofTransaction = proofTransaction;
       createExtract(object)
       .then(() => {
@@ -307,7 +297,7 @@ async function deleteExtract(){
         searchReceipt(Number(month));
         successMessage(`Sucesso`, `Transação cadastrada!`, 3000);
   }).catch((e:any)=>errorMessage(`Erro`, `${e}`, 6000))
-  .finally(()=> setLoading(false));
+  .finally(()=> {setLoading(false)});
   }
 
   async function update(){
@@ -380,7 +370,7 @@ async function excludePayment(){
     searchExpenses(Number(month));
     searchReceipt(Number(month));
     searchExpensesPartial(Number(month));
-  },[status, month, navigate]);
+  },[status, navigate]);
 
   // Retirar month e navigate
 
@@ -392,6 +382,7 @@ async function excludePayment(){
 
       <Flex display={'flex'} alignItems={'center'} direction={'column'} mt={-10}>
 
+      {/* Ententer porque os valores de receita e despesas não estão aparecendo no next e previous*/}
       <CardInfo
         month={returnMonth()}
         receiptTotal={Number(receiptTotal)}
@@ -692,6 +683,7 @@ async function excludePayment(){
               placeholder="Select Date initial"
               size="md"
               type="date"
+              defaultValue={dateInitial.toString()}
               onChange={(e:any)=> setDateInitial(e.target?.value)}
             />
           </ModalBody>
@@ -701,6 +693,7 @@ async function excludePayment(){
               placeholder="Select Date final"
               size="md"
               type="date"
+              defaultValue={dateFinal.toString()}
               onChange={(e:any)=> setDateFinal(e.target.value)}
             />
           </ModalBody>
@@ -710,9 +703,6 @@ async function excludePayment(){
               <Checkbox isChecked={debts} onChange={()=>{setCredits(false); setDebts(true)}}>Apenas débitos</Checkbox>
             </Box>
             <Box display={'flex'} justifyContent={'space-around'} mt={6}>
-              {/* <Link href={`http://localhost:4000/financial-organizational/extract/report/CSV/2024-01-22/2024-01-29`}>
-                <FaFileCsv fontSize={30} cursor={'pointer'}/>
-              </Link> */}
               <Link href={`${reportSearchPeriodCSV(dateInitial, dateFinal)}`}>
                 <FaFileCsv fontSize={30} cursor={'pointer'}/>
               </Link>
@@ -732,7 +722,7 @@ async function excludePayment(){
           </HStack>
             </Box>
             <Flex>
-            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{setActiveFilter('red');onCloseSearch(); searchFilter()}} isLoading={loading}>
+            <Button bg={'#4B0082'} color={'white'} mr={3} _hover={{color:'white', backgroundColor:'#6801b3'}} onClick={()=>{setActiveFilter('red'); onCloseSearch(); searchFilter();  }} isLoading={loading}>
               Buscar
             </Button>
             <Button onClick={onCloseSearch}>Cancelar</Button>
